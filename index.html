@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expedited Daily Brief & Debrief</title>
+<style>
+  :root{
+    --navy:#0e2a47;
+    --navy-2:#163b61;
+    --orange:#f37021;
+    --orange-soft:#fff1e8;
+    --ink:#1b2733;
+    --muted:#64748b;
+    --line:#dce3ec;
+    --bg:#f5f7fa;
+    --card:#ffffff;
+    --green:#1f9d57;
+    --green-soft:#e8f6ee;
+    --shadow:0 1px 3px rgba(14,42,71,.08),0 4px 14px rgba(14,42,71,.06);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45;
+  }
+  header.app{
+    background:linear-gradient(110deg,var(--navy),var(--navy-2));
+    color:#fff;padding:14px 22px;display:flex;align-items:center;gap:16px;
+    position:sticky;top:0;z-index:40;box-shadow:0 2px 10px rgba(0,0,0,.18);
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .mark{width:38px;height:38px;border-radius:9px;background:var(--orange);
+    display:grid;place-items:center;font-weight:800;font-size:18px;color:#fff;
+    box-shadow:0 2px 6px rgba(243,112,33,.5)}
+  .brand h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.2px}
+  .brand .sub{font-size:11.5px;color:#aac4dd;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+  .datebox{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .datebox label{font-size:11px;color:#aac4dd;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  .datebox input{border:0;border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--navy)}
+  .nav{display:flex;gap:4px;background:#fff;padding:0 22px;border-bottom:1px solid var(--line);
+    position:sticky;top:66px;z-index:30}
+  .nav button{background:none;border:0;padding:13px 16px;font-size:13.5px;font-weight:600;
+    color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;display:flex;align-items:center;gap:7px}
+  .nav button:hover{color:var(--navy)}
+  .nav button.active{color:var(--navy);border-bottom-color:var(--orange)}
+  .nav .pill{background:var(--orange);color:#fff;border-radius:20px;font-size:11px;
+    padding:1px 7px;font-weight:700;min-width:18px;text-align:center}
+  main{max-width:1240px;margin:0 auto;padding:22px}
+  .view{display:none}
+  .view.active{display:block}
+
+  /* phase toggle */
+  .phase-toggle{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:11px;
+    padding:4px;gap:4px;box-shadow:var(--shadow)}
+  .phase-btn{border:0;background:none;padding:9px 18px;border-radius:8px;font-size:14px;font-weight:700;
+    color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:9px;font-family:inherit}
+  .phase-btn.active{background:var(--navy);color:#fff}
+  .phase-btn.active .tag{background:rgba(255,255,255,.18);color:#fff}
+  .phase-purpose{color:var(--muted);font-size:12.5px;margin:10px 2px 18px}
+  .net-card{margin-bottom:18px;border-left:4px solid var(--orange)}
+  .net-dot{color:var(--orange);font-size:13px}
+  .lane-section-title{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);
+    font-weight:700;margin:4px 2px 12px;display:flex;align-items:center;gap:10px}
+  .lane-section-title:after{content:"";flex:1;height:1px;background:var(--line)}
+  #laneCards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .lane-card{background:var(--card);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);overflow:hidden}
+  .lane-card .lhead{padding:11px 15px;border-bottom:1px solid var(--line);background:#fafbfd}
+  .lane-card .cc{font-size:10.5px;font-weight:800;letter-spacing:.5px;color:var(--orange)}
+  .lane-card .ln{font-size:13.5px;font-weight:700;color:var(--navy);margin-top:1px}
+  .lane-card .ow{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .lane-card .lbody{padding:13px 15px}
+  .lane-card .filled-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--line);margin-left:auto}
+  .lane-card .lhead{display:flex;align-items:flex-start;gap:8px}
+  .lane-card .lhead .meta{flex:1}
+  .lane-card.has .filled-dot{background:var(--green)}
+
+  /* export menu */
+  .export-wrap{position:relative}
+  .export-menu{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);
+    border-radius:11px;box-shadow:0 8px 30px rgba(14,42,71,.18);padding:6px;display:none;z-index:50;min-width:200px}
+  .export-menu.show{display:block}
+  .export-menu button{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 12px;
+    border-radius:8px;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit}
+  .export-menu button:hover{background:var(--orange-soft);color:var(--orange)}
+
+  /* cards / sections */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .card .head{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .card .head .tag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:3px 9px;border-radius:6px}
+  .tag.am{background:var(--orange-soft);color:var(--orange)}
+  .tag.pm{background:#e9eef5;color:var(--navy)}
+  .card .head h2{margin:0;font-size:15.5px;font-weight:700;color:var(--navy)}
+  .card .head .purpose{font-size:11.5px;color:var(--muted);margin-left:auto;max-width:300px;text-align:right}
+  .card .body{padding:16px 18px}
+  .field{margin-bottom:14px}
+  .field:last-child{margin-bottom:0}
+  .field label{display:block;font-size:11.5px;font-weight:700;color:var(--navy);
+    text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+  .field .hint{font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0;font-size:11px}
+  textarea,input[type=text],input[type=date],select{
+    width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;
+    font-family:inherit;font-size:13.5px;color:var(--ink);background:#fff;resize:vertical}
+  textarea:focus,input:focus,select:focus{outline:none;border-color:var(--orange);
+    box-shadow:0 0 0 3px var(--orange-soft)}
+  textarea{min-height:74px;line-height:1.5}
+
+  /* rich text toolbar */
+  .rt-toolbar{display:flex;gap:3px;border:1px solid var(--line);border-bottom:0;
+    border-radius:9px 9px 0 0;padding:5px 7px;background:#fafbfd;flex-wrap:wrap}
+  .rt-toolbar button{border:0;background:none;width:30px;height:28px;border-radius:6px;
+    cursor:pointer;font-size:13px;color:var(--navy);display:grid;place-items:center}
+  .rt-toolbar button:hover{background:#eef2f7}
+  .rt-toolbar .sep{width:1px;background:var(--line);margin:3px 2px}
+  .rt-editor{border:1px solid var(--line);border-radius:0 0 9px 9px;min-height:120px;
+    padding:11px 13px;font-size:13.5px;line-height:1.55;background:#fff;overflow-y:auto;max-height:300px}
+  .rt-editor:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px var(--orange-soft)}
+  .rt-editor ul,.rt-editor ol{margin:6px 0 6px 22px;padding:0}
+  .rt-editor:empty:before{content:attr(data-ph);color:#aab4c0}
+
+  .btn{border:0;border-radius:9px;padding:9px 16px;font-size:13.5px;font-weight:600;
+    cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-family:inherit}
+  .btn.primary{background:var(--orange);color:#fff}
+  .btn.primary:hover{background:#dd5f12}
+  .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--navy)}
+  .btn.ghost:hover{background:#f3f6fa}
+  .btn.navy{background:var(--navy);color:#fff}
+  .btn.navy:hover{background:var(--navy-2)}
+  .btn.sm{padding:6px 11px;font-size:12.5px}
+  .save-row{display:flex;justify-content:flex-end;gap:10px;margin-top:6px}
+
+  /* follow-up tracker */
+  .toolbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .toolbar h2{margin:0;font-size:18px;color:var(--navy);font-weight:700}
+  .toolbar .spacer{flex:1}
+  .search{position:relative}
+  .search input{padding-left:32px;min-width:230px}
+  .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  .filters{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:5px 12px;
+    font-size:12.5px;font-weight:600;cursor:pointer;color:var(--muted)}
+  .chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;
+    box-shadow:var(--shadow);border:1px solid var(--line)}
+  thead th{background:var(--navy);color:#fff;text-align:left;font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.6px;padding:11px 12px;white-space:nowrap}
+  tbody td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;font-size:13px}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr:hover{background:#f8fafc}
+  tbody tr.done{background:var(--green-soft)}
+  tbody tr.done:hover{background:#ddf0e5}
+  .cat-badge{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap}
+  .notes-cell{max-width:280px}
+  .notes-cell ul,.notes-cell ol{margin:3px 0 3px 18px;padding:0}
+  .row-actions{display:flex;gap:5px;white-space:nowrap}
+  .icon-btn{border:0;background:none;cursor:pointer;width:30px;height:30px;border-radius:7px;
+    display:grid;place-items:center;color:var(--muted)}
+  .icon-btn:hover{background:#eef2f7;color:var(--navy)}
+  .icon-btn.del:hover{background:#fde8e8;color:#d1453b}
+  .check{width:22px;height:22px;border:2px solid var(--line);border-radius:6px;cursor:pointer;
+    display:grid;place-items:center;background:#fff}
+  .check.on{background:var(--green);border-color:var(--green);color:#fff}
+  .overdue{color:#d1453b;font-weight:700}
+  .due-soon{color:var(--orange);font-weight:700}
+  .empty{text-align:center;padding:46px 20px;color:var(--muted)}
+  .empty svg{opacity:.5;margin-bottom:10px}
+
+  /* history */
+  .hist-controls{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+  .hist-entry{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
+  .hist-entry .he-head{padding:12px 18px;background:#fafbfd;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:12px;cursor:pointer}
+  .hist-entry .he-head .d{font-weight:700;color:var(--navy);font-size:14px}
+  .hist-entry .he-head .meta{font-size:11.5px;color:var(--muted);display:flex;gap:14px}
+  .hist-entry .he-head .chev{margin-left:auto;color:var(--muted);transition:transform .2s}
+  .hist-entry.open .chev{transform:rotate(90deg)}
+  .hist-entry .he-body{display:none;padding:16px 18px}
+  .hist-entry.open .he-body{display:block}
+  .he-section{margin-bottom:14px}
+  .he-section h4{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--orange);font-weight:700}
+  .he-section .content{font-size:13px;color:var(--ink);background:#fafbfd;border:1px solid var(--line);
+    border-radius:9px;padding:10px 12px;min-height:20px}
+  .he-section .content:empty:before{content:"—";color:#bbb}
+  .he-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(14,42,71,.42);display:none;
+    align-items:flex-start;justify-content:center;z-index:60;padding:40px 16px;overflow-y:auto}
+  .overlay.show{display:flex}
+  .modal{background:#fff;border-radius:16px;width:100%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .modal .m-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center}
+  .modal .m-head h3{margin:0;font-size:16px;color:var(--navy)}
+  .modal .m-head .x{margin-left:auto;border:0;background:none;font-size:22px;color:var(--muted);cursor:pointer;line-height:1}
+  .modal .m-body{padding:20px}
+  .modal .m-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .cat-add{display:flex;gap:8px;margin-top:6px}
+  .cat-add input{flex:1}
+
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);
+    background:var(--navy);color:#fff;padding:12px 20px;border-radius:10px;font-weight:600;
+    box-shadow:0 8px 30px rgba(0,0,0,.3);z-index:80;opacity:0;transition:all .3s;font-size:13.5px}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+  .toast.show .ck{color:var(--orange)}
+
+  .stat-row{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+  .stat{flex:1;min-width:120px;background:#fff;border:1px solid var(--line);border-radius:12px;
+    padding:13px 16px;box-shadow:var(--shadow)}
+  .stat .n{font-size:26px;font-weight:800;color:var(--navy);line-height:1}
+  .stat .l{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:600;margin-top:4px}
+  .stat.warn .n{color:var(--orange)}
+  .stat.bad .n{color:#d1453b}
+
+  @media(max-width:860px){
+    .grid2,.he-cols{grid-template-columns:1fr}
+    #laneCards{grid-template-columns:1fr}
+    .card .head .purpose{display:none}
+    .nav{overflow-x:auto}
+    table{display:block;overflow-x:auto;white-space:nowrap}
+  }
+</style>
+</head>
+<body>
+<header class="app">
+  <div class="brand">
+    <div class="mark">E</div>
+    <div>
+      <h1>Expedited Daily Brief &amp; Debrief</h1>
+      <div class="sub">Operating Rhythm · Hirschbach</div>
+    </div>
+  </div>
+  <div class="datebox">
+    <label for="opDate">Operating day</label>
+    <input type="date" id="opDate">
+  </div>
+</header>
+
+<nav class="nav">
+  <button data-view="today" class="active">📋 Today's Brief / Debrief</button>
+  <button data-view="followups">✅ Follow-ups <span class="pill" id="openPill">0</span></button>
+  <button data-view="history">🗂️ History</button>
+</nav>
+
+<main>
+  <!-- ============ TODAY ============ -->
+  <section class="view active" id="view-today">
+    <div class="phase-toggle">
+      <button class="phase-btn active" data-phase="am"><span class="tag am">AM</span> Morning Brief</button>
+      <button class="phase-btn" data-phase="pm"><span class="tag pm">PM</span> Afternoon Debrief</button>
+    </div>
+    <p class="phase-purpose" id="phasePurpose">Drive same-day execution, surface issues early, and build daily accountability.</p>
+
+    <!-- network-wide card -->
+    <div class="card net-card">
+      <div class="head">
+        <span class="net-dot">◆</span>
+        <h2 id="netTitle">Network-wide notes</h2>
+        <span class="purpose" id="netHint">Items that span the whole network — not tied to one lane.</span>
+      </div>
+      <div class="body" id="netBody"><!-- injected --></div>
+    </div>
+
+    <h3 class="lane-section-title">By Lane</h3>
+    <div id="laneCards"><!-- injected --></div>
+
+    <div class="save-row">
+      <button class="btn ghost" id="addFromBrief">＋ Add follow-up from this call</button>
+      <button class="btn primary" id="saveDay">💾 Save day</button>
+    </div>
+  </section>
+
+  <!-- ============ FOLLOW-UPS ============ -->
+  <section class="view" id="view-followups">
+    <div class="stat-row">
+      <div class="stat"><div class="n" id="stTotal">0</div><div class="l">Open items</div></div>
+      <div class="stat bad"><div class="n" id="stOverdue">0</div><div class="l">Overdue</div></div>
+      <div class="stat warn"><div class="n" id="stSoon">0</div><div class="l">Due ≤ 3 days</div></div>
+      <div class="stat"><div class="n" id="stDone">0</div><div class="l">Completed</div></div>
+    </div>
+
+    <div class="toolbar">
+      <h2>Follow-up Tracker</h2>
+      <div class="spacer"></div>
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="fuSearch" placeholder="Search notes, owner…">
+      </div>
+      <div class="export-wrap">
+        <button class="btn navy" id="exportBtn">⬇ Export ▾</button>
+        <div class="export-menu" id="exportMenu">
+          <button data-fmt="csv">Export to CSV</button>
+          <button data-fmt="excel">Export to Excel</button>
+          <button data-fmt="csv-filtered">CSV — current view only</button>
+        </div>
+      </div>
+      <button class="btn primary" id="newFu">＋ New follow-up</button>
+    </div>
+
+    <div class="toolbar">
+      <div class="filters" id="catFilters"></div>
+      <div class="spacer"></div>
+      <div class="filters">
+        <span class="chip status-chip active" data-status="open">Open</span>
+        <span class="chip status-chip" data-status="done">Completed</span>
+        <span class="chip status-chip" data-status="all">All</span>
+      </div>
+    </div>
+
+    <table>
+      <thead><tr>
+        <th style="width:34px"></th>
+        <th>Date Added</th>
+        <th>Category</th>
+        <th>Notes</th>
+        <th>Owner</th>
+        <th>Due Date</th>
+        <th>Completion Notes</th>
+        <th style="width:80px"></th>
+      </tr></thead>
+      <tbody id="fuBody"></tbody>
+    </table>
+    <div class="empty" id="fuEmpty" style="display:none">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      <div>No follow-ups here yet. Add one to start tracking.</div>
+    </div>
+  </section>
+
+  <!-- ============ HISTORY ============ -->
+  <section class="view" id="view-history">
+    <div class="toolbar">
+      <h2>History</h2>
+      <div class="spacer"></div>
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="histSearch" placeholder="Search across all days…">
+      </div>
+    </div>
+    <div id="histList"></div>
+    <div class="empty" id="histEmpty" style="display:none">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h18v18H3z"/><path d="M3 9h18M9 21V9"/></svg>
+      <div>No saved days yet. Fill in a brief and hit “Save day”.</div>
+    </div>
+  </section>
+</main>
+
+<!-- ============ FOLLOW-UP MODAL ============ -->
+<div class="overlay" id="fuOverlay">
+  <div class="modal">
+    <div class="m-head"><h3 id="fuModalTitle">New Follow-up</h3><button class="x" id="fuClose">×</button></div>
+    <div class="m-body">
+      <input type="hidden" id="fuId">
+      <div class="two">
+        <div class="field">
+          <label>Date Added</label>
+          <input type="date" id="fuDate">
+        </div>
+        <div class="field">
+          <label>Due Date</label>
+          <input type="date" id="fuDue">
+        </div>
+      </div>
+      <div class="field">
+        <label>Category</label>
+        <select id="fuCat"></select>
+        <div class="cat-add">
+          <input type="text" id="fuNewCat" placeholder="Or type a new category…">
+          <button class="btn ghost sm" id="fuAddCat">Add</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Owner</label>
+        <input type="text" id="fuOwner" list="ownerList" placeholder="Assign an owner…">
+        <datalist id="ownerList"></datalist>
+      </div>
+      <div class="field">
+        <label>Notes <span class="hint">(rich text)</span></label>
+        <div class="rt" data-target="fuNotes" data-ph="What needs to happen and why…"></div>
+      </div>
+      <div class="field">
+        <label style="display:flex;align-items:center;gap:9px;cursor:pointer">
+          <span class="check" id="fuDoneCheck"></span> Completed
+        </label>
+      </div>
+      <div class="field" id="fuCompWrap" style="display:none">
+        <label>Completion Notes</label>
+        <div class="rt" data-target="fuCompNotes" data-ph="How was it resolved?"></div>
+      </div>
+    </div>
+    <div class="m-foot">
+      <button class="btn ghost" id="fuCancel">Cancel</button>
+      <button class="btn primary" id="fuSave">Save follow-up</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const OWNERS = ["Allen Allday","Amye Alvarez","Angela Lazarin","Bonnie Brooks","Brandon Reyna","Brian Stewart","Bryan Ryder","Casey Raick","Cecil Watts","Chelsie Bebber","David Klement","Joe Adams","John Hessler","Jordan Fream","Josh Catton","Krista Vokey","Lacey Curry","Lyndi Curry","Mike Howell","Nate Kratz","Regina Henson","Rober Williams","Samsung Rivera","Sara Weltz","Sean Moser","Tyler Romine"];
+const DEFAULT_CATS = ["Maintenance","Driver","Equipment","Planning","Loads"];
+
+/* Lanes from the Daily Tracker. Each gets its own notes section per phase. */
+const LANES = [
+  {id:"cc152", cc:"152", lane:"Indianapolis, IN ↔ Kansas City, KS", owner:"Bryan Ryder"},
+  {id:"cc148", cc:"148", lane:"Indianapolis, IN ↔ Mount Airy, NC", owner:"Allen Allday"},
+  {id:"cc154", cc:"154", lane:"Indianapolis, IN ↔ Carlisle, PA", owner:"Lacey Curry"},
+  {id:"cc149", cc:"149", lane:"Indianapolis, IN ↔ Bedford, PA", owner:"Lacey Curry"},
+  {id:"cc151", cc:"151", lane:"Sapulpa, OK (Hub) ↔ Kansas City ↔ Denton, TX", owner:"Sara Weltz"},
+  {id:"cc147", cc:"147", lane:"Aledo, TX ↔ San Bernardino, CA", owner:"Regina Henson"},
+  {id:"cc135", cc:"135", lane:"AZ ↔ TX (Aurora)", owner:"Sean Moser"},
+];
+/* Prompts shown inside each lane card, per phase */
+const PHASE_PROMPTS = {
+  am:"Overnight review · today's plan · key focus · support needed for this lane…",
+  pm:"What went well · what to improve · commitments for this lane…"
+};
+const CAT_COLORS = {
+  Maintenance:["#fde8e8","#c0392b"], Driver:["#e8f1fd","#1d5fb0"],
+  Equipment:["#fff1e8","#d2660f"], Planning:["#efe8fd","#6b40c0"],
+  Loads:["#e8f6ee","#1f7d47"], _default:["#eef2f7","#445566"]
+};
+
+/* ---------- storage ---------- */
+const K_DAYS="exp_brief_days", K_FU="exp_followups", K_CATS="exp_cats";
+let store = {
+  days: {},        // {dateISO: {am_overnight, am_plan, ... pm_trends, savedAt}}
+  fus: [],         // follow-up items
+  cats: [...DEFAULT_CATS]
+};
+async function load(){
+  try{
+    const d = await window.storage.get(K_DAYS, true); if(d) store.days = JSON.parse(d.value);
+  }catch(e){}
+  try{
+    const f = await window.storage.get(K_FU, true); if(f) store.fus = JSON.parse(f.value);
+  }catch(e){}
+  try{
+    const c = await window.storage.get(K_CATS, true); if(c) store.cats = JSON.parse(c.value);
+  }catch(e){}
+}
+async function saveDays(){ try{ await window.storage.set(K_DAYS, JSON.stringify(store.days), true);}catch(e){} }
+async function saveFus(){ try{ await window.storage.set(K_FU, JSON.stringify(store.fus), true);}catch(e){} }
+async function saveCats(){ try{ await window.storage.set(K_CATS, JSON.stringify(store.cats), true);}catch(e){} }
+
+/* ---------- helpers ---------- */
+const $ = s=>document.querySelector(s);
+const $$ = s=>document.querySelectorAll(s);
+function todayISO(){ const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); }
+function fmtDate(iso){ if(!iso) return ""; const [y,m,d]=iso.split("-"); return `${m}/${d}/${y.slice(2)}`; }
+function fmtLong(iso){ if(!iso) return ""; const d=new Date(iso+"T00:00:00"); return d.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"}); }
+function daysUntil(iso){ if(!iso) return null; const t=new Date(todayISO()+"T00:00:00"); const d=new Date(iso+"T00:00:00"); return Math.round((d-t)/86400000); }
+function catColor(c){ return CAT_COLORS[c]||CAT_COLORS._default; }
+function escapeHtml(s){ return (s||"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
+function toast(msg){ const t=$("#toast"); t.innerHTML=`<span class="ck">✓</span> ${msg}`; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2200); }
+let curDate = todayISO();
+
+/* ---------- rich text ---------- */
+function buildRT(el){
+  const target = el.dataset.target;
+  const tb = document.createElement("div"); tb.className="rt-toolbar";
+  const btns=[["bold","𝐁","Bold"],["italic","𝑰","Italic"],["underline","U̲","Underline"],["sep"],
+    ["insertUnorderedList","•","Bullet list"],["insertOrderedList","1.","Numbered list"]];
+  btns.forEach(b=>{
+    if(b[0]==="sep"){ const s=document.createElement("div"); s.className="sep"; tb.appendChild(s); return; }
+    const btn=document.createElement("button"); btn.type="button"; btn.textContent=b[1]; btn.title=b[2];
+    btn.onmousedown=e=>{e.preventDefault(); document.execCommand(b[0],false,null); ed.focus();};
+    tb.appendChild(btn);
+  });
+  const ed = document.createElement("div");
+  ed.className="rt-editor"; ed.contentEditable="true"; ed.dataset.ph=el.dataset.ph||"";
+  ed.id="rt_"+target; ed.dataset.field=target;
+  el.appendChild(tb); el.appendChild(ed);
+  return ed;
+}
+function initRTs(){ $$(".rt").forEach(el=>{ if(!el.querySelector(".rt-editor")) buildRT(el); }); }
+function getRT(target){ const ed=$("#rt_"+target); return ed?ed.innerHTML.trim():""; }
+function setRT(target,html){ const ed=$("#rt_"+target); if(ed) ed.innerHTML=html||""; }
+function clearRT(target){ setRT(target,""); }
+
+/* ---------- views ---------- */
+$$(".nav button").forEach(b=>b.onclick=()=>{
+  $$(".nav button").forEach(x=>x.classList.remove("active"));
+  $$(".view").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  $("#view-"+b.dataset.view).classList.add("active");
+  if(b.dataset.view==="followups") renderFus();
+  if(b.dataset.view==="history") renderHist();
+});
+
+/* ---------- today / brief (per-lane, per-phase) ---------- */
+let curPhase = "am";
+// in-memory working copy of the current day while editing (so phase switches don't lose edits)
+let dayDraft = {am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}};
+
+const PHASE_PURPOSE = {
+  am:"Drive same-day execution, surface issues early, and build daily accountability.",
+  pm:"Evaluate performance, capture learnings, and reinforce accountability."
+};
+const NET_TITLE = {am:"Network-wide notes", pm:"Network-wide debrief"};
+const NET_HINT = {
+  am:"Overnight review, today's plan, key focus items and support needed across the network.",
+  pm:"What went well, what to improve, and commitments that span the whole network."
+};
+
+function blankDay(){ return {am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}}; }
+
+// pull whatever is currently typed in the visible editors into dayDraft[curPhase]
+function capturePhaseFromDOM(){
+  const p = dayDraft[curPhase];
+  p.net = getRT("net_"+curPhase);
+  LANES.forEach(L=>{ p.lanes[L.id] = getRT("lane_"+curPhase+"_"+L.id); });
+}
+
+// build the editor DOM for the current phase from dayDraft
+function renderPhase(){
+  const p = dayDraft[curPhase];
+  $("#phasePurpose").textContent = PHASE_PURPOSE[curPhase];
+  $("#netTitle").textContent = NET_TITLE[curPhase];
+  $("#netHint").textContent = NET_HINT[curPhase];
+
+  // network card
+  const nb=$("#netBody");
+  nb.innerHTML = `<div class="field"><div class="rt" data-target="net_${curPhase}" data-ph="${PHASE_PROMPTS[curPhase]}"></div></div>`;
+
+  // lane cards
+  const lc=$("#laneCards"); lc.innerHTML="";
+  LANES.forEach(L=>{
+    const has = p.lanes[L.id] && stripHtml(p.lanes[L.id]).trim();
+    const card=document.createElement("div");
+    card.className="lane-card"+(has?" has":"");
+    card.innerHTML=`
+      <div class="lhead">
+        <div class="meta">
+          <div class="cc">CC ${L.cc}</div>
+          <div class="ln">${L.lane}</div>
+          <div class="ow">Owner: ${L.owner}</div>
+        </div>
+        <span class="filled-dot" title="Has notes"></span>
+      </div>
+      <div class="lbody"><div class="field"><div class="rt" data-target="lane_${curPhase}_${L.id}" data-ph="Notes for this lane…"></div></div></div>`;
+    lc.appendChild(card);
+  });
+
+  initRTs();
+  // populate values
+  setRT("net_"+curPhase, p.net||"");
+  LANES.forEach(L=> setRT("lane_"+curPhase+"_"+L.id, p.lanes[L.id]||""));
+  // live filled-dot updates
+  $$("#laneCards .rt-editor").forEach(ed=>{
+    ed.addEventListener("input",()=>{
+      const card=ed.closest(".lane-card");
+      card.classList.toggle("has", !!ed.textContent.trim());
+    });
+  });
+}
+
+function loadDay(iso){
+  curDate=iso;
+  const saved = store.days[iso];
+  dayDraft = saved ? JSON.parse(JSON.stringify(saved)) : blankDay();
+  if(!dayDraft.am) dayDraft.am={net:"",lanes:{}};
+  if(!dayDraft.pm) dayDraft.pm={net:"",lanes:{}};
+  renderPhase();
+}
+
+function gatherDay(){
+  capturePhaseFromDOM();
+  return {am:dayDraft.am, pm:dayDraft.pm, savedAt:new Date().toISOString()};
+}
+function dayHasContent(d){
+  const chk=p=>p && (stripHtml(p.net).trim() || Object.values(p.lanes||{}).some(v=>stripHtml(v).trim()));
+  return chk(d.am)||chk(d.pm);
+}
+
+// phase toggle
+$$(".phase-btn").forEach(b=>b.onclick=()=>{
+  if(b.dataset.phase===curPhase) return;
+  capturePhaseFromDOM();                 // keep current edits
+  $$(".phase-btn").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  curPhase=b.dataset.phase;
+  renderPhase();
+});
+
+$("#opDate").onchange = e=>{ loadDay(e.target.value); };
+$("#saveDay").onclick = async ()=>{
+  const d=gatherDay();
+  if(!dayHasContent(d)){ toast("Nothing to save yet"); return; }
+  store.days[curDate]=d;
+  await saveDays();
+  toast("Day saved — "+fmtDate(curDate));
+};
+
+/* ---------- categories ---------- */
+function renderCatFilters(){
+  const wrap=$("#catFilters");
+  wrap.innerHTML='<span class="chip cat-chip active" data-cat="all">All categories</span>';
+  store.cats.forEach(c=>{
+    const [bg,fg]=catColor(c);
+    const s=document.createElement("span");
+    s.className="chip cat-chip"; s.dataset.cat=c; s.textContent=c;
+    wrap.appendChild(s);
+  });
+  $$(".cat-chip").forEach(ch=>ch.onclick=()=>{
+    $$(".cat-chip").forEach(x=>x.classList.remove("active")); ch.classList.add("active");
+    activeCat=ch.dataset.cat; renderFus();
+  });
+}
+function fillCatSelect(){
+  const sel=$("#fuCat"); sel.innerHTML="";
+  store.cats.forEach(c=>{ const o=document.createElement("option"); o.value=c; o.textContent=c; sel.appendChild(o); });
+}
+$("#fuAddCat").onclick=async ()=>{
+  const v=$("#fuNewCat").value.trim();
+  if(!v) return;
+  if(!store.cats.includes(v)){ store.cats.push(v); await saveCats(); fillCatSelect(); renderCatFilters(); }
+  $("#fuCat").value=v; $("#fuNewCat").value="";
+};
+
+/* ---------- follow-ups ---------- */
+let activeCat="all", activeStatus="open";
+$$(".status-chip").forEach(ch=>ch.onclick=()=>{
+  $$(".status-chip").forEach(x=>x.classList.remove("active")); ch.classList.add("active");
+  activeStatus=ch.dataset.status; renderFus();
+});
+$("#fuSearch").oninput=()=>renderFus();
+
+function fuStats(){
+  const open=store.fus.filter(f=>!f.done);
+  $("#stTotal").textContent=open.length;
+  $("#stDone").textContent=store.fus.filter(f=>f.done).length;
+  $("#stOverdue").textContent=open.filter(f=>{const n=daysUntil(f.due);return n!==null&&n<0;}).length;
+  $("#stSoon").textContent=open.filter(f=>{const n=daysUntil(f.due);return n!==null&&n>=0&&n<=3;}).length;
+  $("#openPill").textContent=open.length;
+}
+function renderFus(){
+  fuStats();
+  const q=($("#fuSearch").value||"").toLowerCase();
+  const body=$("#fuBody"); body.innerHTML="";
+  let rows = store.fus.slice().sort((a,b)=>{
+    if(a.done!==b.done) return a.done?1:-1;
+    return (a.due||"9999").localeCompare(b.due||"9999");
+  });
+  rows=rows.filter(f=>{
+    if(activeStatus==="open"&&f.done) return false;
+    if(activeStatus==="done"&&!f.done) return false;
+    if(activeCat!=="all"&&f.cat!==activeCat) return false;
+    if(q){
+      const blob=(f.cat+" "+f.owner+" "+stripHtml(f.notes)+" "+stripHtml(f.compNotes)).toLowerCase();
+      if(!blob.includes(q)) return false;
+    }
+    return true;
+  });
+  $("#fuEmpty").style.display = rows.length?"none":"block";
+  rows.forEach(f=>{
+    const [bg,fg]=catColor(f.cat);
+    const n=daysUntil(f.due);
+    let dueCls="", dueExtra="";
+    if(!f.done && n!==null){ if(n<0){dueCls="overdue";dueExtra=` (${-n}d late)`;} else if(n<=3){dueCls="due-soon";dueExtra=n===0?" (today)":` (${n}d)`;} }
+    const tr=document.createElement("tr");
+    if(f.done) tr.className="done";
+    tr.innerHTML=`
+      <td><span class="check ${f.done?'on':''}" data-toggle="${f.id}">${f.done?'✓':''}</span></td>
+      <td>${fmtDate(f.date)}</td>
+      <td><span class="cat-badge" style="background:${bg};color:${fg}">${escapeHtml(f.cat)}</span></td>
+      <td class="notes-cell">${f.notes||'<span style="color:#bbb">—</span>'}</td>
+      <td>${escapeHtml(f.owner)||'<span style="color:#bbb">—</span>'}</td>
+      <td class="${dueCls}">${fmtDate(f.due)}${dueExtra}</td>
+      <td class="notes-cell">${f.compNotes||'<span style="color:#bbb">—</span>'}</td>
+      <td><div class="row-actions">
+        <button class="icon-btn" data-edit="${f.id}" title="Edit">✏️</button>
+        <button class="icon-btn del" data-del="${f.id}" title="Delete">🗑️</button>
+      </div></td>`;
+    body.appendChild(tr);
+  });
+  $$("[data-toggle]").forEach(el=>el.onclick=async()=>{
+    const f=store.fus.find(x=>x.id===el.dataset.toggle);
+    f.done=!f.done; if(f.done&&!f.date) f.date=todayISO();
+    await saveFus(); renderFus();
+  });
+  $$("[data-edit]").forEach(el=>el.onclick=()=>openFu(el.dataset.edit));
+  $$("[data-del]").forEach(el=>el.onclick=async()=>{
+    if(!confirm("Delete this follow-up?")) return;
+    store.fus=store.fus.filter(x=>x.id!==el.dataset.del);
+    await saveFus(); renderFus();
+  });
+}
+function stripHtml(h){ const d=document.createElement("div"); d.innerHTML=h||""; return d.textContent||""; }
+
+/* ---------- follow-up modal ---------- */
+function openFu(id){
+  fillCatSelect();
+  const editing = !!id;
+  $("#fuModalTitle").textContent = editing?"Edit Follow-up":"New Follow-up";
+  let f = editing ? store.fus.find(x=>x.id===id) : {id:null,date:todayISO(),due:"",cat:store.cats[0],owner:"",notes:"",done:false,compNotes:""};
+  $("#fuId").value=f.id||"";
+  $("#fuDate").value=f.date||todayISO();
+  $("#fuDue").value=f.due||"";
+  $("#fuCat").value=f.cat||store.cats[0];
+  $("#fuOwner").value=f.owner||"";
+  setRT("fuNotes",f.notes||"");
+  setRT("fuCompNotes",f.compNotes||"");
+  setDone(f.done);
+  $("#fuNewCat").value="";
+  $("#fuOverlay").classList.add("show");
+}
+function setDone(v){
+  const c=$("#fuDoneCheck");
+  c.classList.toggle("on",v); c.textContent=v?"✓":"";
+  c.dataset.v=v?"1":"0";
+  $("#fuCompWrap").style.display=v?"block":"none";
+}
+$("#fuDoneCheck").onclick=()=>setDone($("#fuDoneCheck").dataset.v!=="1");
+function closeFu(){ $("#fuOverlay").classList.remove("show"); }
+$("#fuClose").onclick=closeFu; $("#fuCancel").onclick=closeFu;
+$("#fuOverlay").onclick=e=>{ if(e.target===$("#fuOverlay")) closeFu(); };
+$("#newFu").onclick=()=>openFu(null);
+$("#fuSave").onclick=async()=>{
+  const id=$("#fuId").value;
+  const done=$("#fuDoneCheck").dataset.v==="1";
+  const data={
+    date:$("#fuDate").value||todayISO(),
+    due:$("#fuDue").value,
+    cat:$("#fuCat").value,
+    owner:$("#fuOwner").value.trim(),
+    notes:getRT("fuNotes"),
+    done, compNotes:getRT("fuCompNotes")
+  };
+  if(id){ Object.assign(store.fus.find(x=>x.id===id),data); }
+  else { data.id="fu_"+Date.now()+"_"+Math.random().toString(36).slice(2,6); store.fus.push(data); }
+  await saveFus(); closeFu(); renderFus(); toast("Follow-up saved");
+};
+$("#addFromBrief").onclick=()=>{
+  // jump to followups tab and open a new item pre-stamped to the operating day
+  $$(".nav button").forEach(x=>x.classList.remove("active"));
+  $$(".view").forEach(x=>x.classList.remove("active"));
+  $('.nav button[data-view="followups"]').classList.add("active");
+  $("#view-followups").classList.add("active");
+  renderFus(); openFu(null); $("#fuDate").value=curDate;
+};
+
+/* ---------- export ---------- */
+function getFilteredFus(){
+  const q=($("#fuSearch").value||"").toLowerCase();
+  return store.fus.slice().sort((a,b)=>{
+    if(a.done!==b.done) return a.done?1:-1;
+    return (a.due||"9999").localeCompare(b.due||"9999");
+  }).filter(f=>{
+    if(activeStatus==="open"&&f.done) return false;
+    if(activeStatus==="done"&&!f.done) return false;
+    if(activeCat!=="all"&&f.cat!==activeCat) return false;
+    if(q){
+      const blob=(f.cat+" "+f.owner+" "+stripHtml(f.notes)+" "+stripHtml(f.compNotes)).toLowerCase();
+      if(!blob.includes(q)) return false;
+    }
+    return true;
+  });
+}
+const EXPORT_COLS=["Date Added","Category","Notes","Owner","Due Date","Completed","Completion Notes"];
+function fuRow(f){
+  return [ f.date||"", f.cat||"", stripHtml(f.notes), f.owner||"", f.due||"",
+           f.done?"Yes":"No", stripHtml(f.compNotes) ];
+}
+function downloadFile(name, content, mime){
+  const blob=new Blob([content],{type:mime});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function csvEscape(v){ v=(v==null?"":String(v)); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
+function toCSV(items){
+  const lines=[EXPORT_COLS.map(csvEscape).join(",")];
+  items.forEach(f=> lines.push(fuRow(f).map(csvEscape).join(",")));
+  return "\ufeff"+lines.join("\r\n"); // BOM so Excel reads UTF-8
+}
+function toExcelXML(items){
+  // SpreadsheetML 2003 — opens natively in Excel as a real worksheet
+  const cell=(v,t)=>`<Cell><Data ss:Type="${t}">${escapeHtml(String(v==null?"":v))}</Data></Cell>`;
+  const head=`<Row>${EXPORT_COLS.map(c=>`<Cell ss:StyleID="h"><Data ss:Type="String">${c}</Data></Cell>`).join("")}</Row>`;
+  const body=items.map(f=>{
+    const r=fuRow(f);
+    return `<Row>${r.map(v=>cell(v,"String")).join("")}</Row>`;
+  }).join("");
+  return `<?xml version="1.0"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+<Styles><Style ss:ID="h"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#0E2A47" ss:Pattern="Solid"/></Style></Styles>
+<Worksheet ss:Name="Follow-ups"><Table>
+<Column ss:Width="80"/><Column ss:Width="80"/><Column ss:Width="300"/><Column ss:Width="110"/><Column ss:Width="80"/><Column ss:Width="70"/><Column ss:Width="300"/>
+${head}${body}
+</Table></Worksheet></Workbook>`;
+}
+$("#exportBtn").onclick=(e)=>{ e.stopPropagation(); $("#exportMenu").classList.toggle("show"); };
+document.addEventListener("click",()=>$("#exportMenu").classList.remove("show"));
+$("#exportMenu").addEventListener("click",e=>e.stopPropagation());
+$$("#exportMenu button").forEach(b=>b.onclick=()=>{
+  const fmt=b.dataset.fmt;
+  const stamp=todayISO();
+  const items = fmt==="csv-filtered" ? getFilteredFus() : store.fus.slice();
+  if(!items.length){ toast("No follow-ups to export"); $("#exportMenu").classList.remove("show"); return; }
+  if(fmt==="excel"){
+    downloadFile(`Expedited_Followups_${stamp}.xls`, toExcelXML(items), "application/vnd.ms-excel");
+  }else{
+    downloadFile(`Expedited_Followups_${stamp}.csv`, toCSV(items), "text/csv;charset=utf-8");
+  }
+  $("#exportMenu").classList.remove("show");
+  toast(`Exported ${items.length} item${items.length>1?"s":""}`);
+});
+
+/* ---------- history ---------- */
+$("#histSearch").oninput=()=>renderHist();
+function dayBlob(d){
+  let parts=[];
+  ["am","pm"].forEach(ph=>{ const p=d[ph]; if(!p) return; parts.push(stripHtml(p.net)); Object.values(p.lanes||{}).forEach(v=>parts.push(stripHtml(v))); });
+  return parts.join(" ").toLowerCase();
+}
+function phaseSection(d,ph){
+  const p=d[ph]||{net:"",lanes:{}};
+  let html=`<div class="he-section"><h4>${ph==="am"?"AM · Network-wide":"PM · Network-wide"}</h4><div class="content">${p.net||""}</div></div>`;
+  LANES.forEach(L=>{
+    const v=p.lanes&&p.lanes[L.id];
+    if(v && stripHtml(v).trim()){
+      html+=`<div class="he-section"><h4>${ph.toUpperCase()} · CC ${L.cc} — ${L.owner}</h4><div class="content">${v}</div></div>`;
+    }
+  });
+  return html;
+}
+function renderHist(){
+  const q=($("#histSearch").value||"").toLowerCase();
+  const list=$("#histList"); list.innerHTML="";
+  const keys=Object.keys(store.days).sort().reverse();
+  let shown=0;
+  keys.forEach(iso=>{
+    const d=store.days[iso];
+    if(q && !dayBlob(d).includes(q)) return;
+    shown++;
+    // count filled lane+net sections across both phases
+    let filled=0, total=2*(LANES.length+1);
+    ["am","pm"].forEach(ph=>{ const p=d[ph]||{lanes:{}}; if(stripHtml(p.net).trim())filled++; LANES.forEach(L=>{ if(p.lanes&&stripHtml(p.lanes[L.id]).trim())filled++; }); });
+    const e=document.createElement("div"); e.className="hist-entry";
+    e.innerHTML=`
+      <div class="he-head">
+        <span class="d">${fmtLong(iso)}</span>
+        <span class="meta"><span>${filled}/${total} sections</span><span>Saved ${new Date(d.savedAt).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</span></span>
+        <span class="chev">▶</span>
+      </div>
+      <div class="he-body">
+        <div class="he-cols">
+          <div>${phaseSection(d,"am")}</div>
+          <div>${phaseSection(d,"pm")}</div>
+        </div>
+        <div style="margin-top:6px"><button class="btn ghost sm" data-open="${iso}">Open this day in editor</button></div>
+      </div>`;
+    e.querySelector(".he-head").onclick=()=>e.classList.toggle("open");
+    list.appendChild(e);
+  });
+  $("#histEmpty").style.display = shown?"none":"block";
+  $$("[data-open]").forEach(b=>b.onclick=()=>{
+    const iso=b.dataset.open;
+    $("#opDate").value=iso; loadDay(iso);
+    $$(".nav button").forEach(x=>x.classList.remove("active"));
+    $$(".view").forEach(x=>x.classList.remove("active"));
+    $('.nav button[data-view="today"]').classList.add("active");
+    $("#view-today").classList.add("active");
+  });
+}
+
+/* ---------- init ---------- */
+(async function(){
+  initRTs();
+  await load();
+  $("#opDate").value=todayISO();
+  loadDay(todayISO());
+  // owners datalist
+  const dl=$("#ownerList"); OWNERS.forEach(o=>{const op=document.createElement("option");op.value=o;dl.appendChild(op);});
+  renderCatFilters(); fillCatSelect(); fuStats();
+})();
+</script>
+</body>
+</html>
