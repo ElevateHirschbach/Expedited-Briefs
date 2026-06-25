@@ -104,6 +104,18 @@
   .owner-add-row{display:flex;gap:8px;margin-bottom:14px;max-width:480px}
   .owner-add-row input{flex:1}
   #ownerTable .owner-name{font-weight:600;color:var(--navy)}
+  /* import notes modal */
+  .import-help{color:var(--muted);font-size:12.5px;margin:0 0 10px;line-height:1.55}
+  .import-legend{background:#fafbfd;border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:12px;color:var(--ink);line-height:1.9}
+  .import-legend code{background:var(--orange-soft);color:var(--orange);border-radius:5px;padding:1px 6px;font-weight:700;font-size:11.5px}
+  .import-preview{margin-top:14px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .import-preview .pv-head{background:var(--navy);color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:7px 12px}
+  .import-preview .pv-row{padding:9px 12px;border-bottom:1px solid var(--line);font-size:12.5px}
+  .import-preview .pv-row:last-child{border-bottom:0}
+  .import-preview .pv-row .tag{display:inline-block;font-weight:700;color:var(--orange);font-size:11px;margin-right:8px;min-width:64px}
+  .import-preview .pv-row.unmatched{background:#fde8e8}
+  .import-preview .pv-row.unmatched .tag{color:#c0392b}
+  .import-preview .pv-snip{color:var(--muted)}
   .export-menu{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);
     border-radius:11px;box-shadow:0 8px 30px rgba(14,42,71,.18);padding:6px;display:none;z-index:50;min-width:200px}
   .export-menu.show{display:block}
@@ -294,6 +306,7 @@
     <div id="laneCards"><!-- injected --></div>
 
     <div class="save-row">
+      <button class="btn ghost" id="importBriefBtn">📋 Import notes</button>
       <button class="btn ghost" id="addFromBrief">＋ Add follow-up from this call</button>
       <button class="btn navy" id="briefPdfBtn">🖨️ Export brief to PDF</button>
       <button class="btn primary" id="saveDay">💾 Save day</button>
@@ -450,6 +463,32 @@
   </div>
 </div>
 
+<!-- ============ IMPORT NOTES MODAL ============ -->
+<div class="overlay" id="importOverlay">
+  <div class="modal" style="max-width:680px">
+    <div class="m-head"><h3 id="importTitle">Import notes into Morning Brief</h3><button class="x" id="importClose">×</button></div>
+    <div class="m-body">
+      <p class="import-help">Paste your call notes below using these line markers. Each marker starts a new section; text under it (including multiple lines) belongs to that section until the next marker.</p>
+      <div class="import-legend">
+        <code>NET:</code> network-wide notes &nbsp;·&nbsp; <code>CC 151:</code> a lane (matched by cost-center number) &nbsp;·&nbsp; <code>OWNERS 151: Joe Adams, Sara Weltz</code> set today's owners for a lane
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label>Paste notes</label>
+        <textarea id="importText" style="min-height:200px;font-family:'Segoe UI',monospace" placeholder="NET: Customer holiday hours pending. Push freight early for Tue–Thu.&#10;CC 151: Everybody departed on time. Need 3 afternoon loads for the Denton round trip.&#10;OWNERS 151: Joe Adams&#10;CC 135: Running 6 of 8. Aurora staffing still short."></textarea>
+      </div>
+      <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px">
+        <input type="checkbox" id="importAppend"> Append to existing notes instead of replacing them
+      </label>
+      <div id="importPreview" class="import-preview" style="display:none"></div>
+    </div>
+    <div class="m-foot">
+      <button class="btn ghost" id="importCancel">Cancel</button>
+      <button class="btn navy" id="importPreviewBtn">Preview</button>
+      <button class="btn primary" id="importApply" disabled>Apply to brief</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="fuOverlay">
   <div class="modal">
     <div class="m-head"><h3 id="fuModalTitle">New Follow-up</h3><button class="x" id="fuClose">×</button></div>
@@ -598,7 +637,7 @@ function seedDebrief0624(){
 <li>Tomorrow AM likely no-depart: one load short in Sapulpa; return load won't arrive until ~3 PM, too late to turn.</li>
 </ul>
 <p><b>Freight opportunity (John):</b> Working with Donna; Sarah Weltz noticed area 4/5 freight marked live load/live unload with a single delivery appointment is actually a window — we can drop. Exploring more drop-capable customers to widen the window, shuffle the deck, and avoid counting ourselves late.</p>
-<p><b>Lane discipline (Lindy / leadership):</b> Keeping drivers as Oklahoma drivers (either direction) rather than splitting KC vs Dallas — a hard split would lock a driver into one run. Truck delay on this lane is also a load delay (KC→Sapulpa return is the Texas load for the PM driver); no 2-hour fluff like other lanes. Treat it as a sailing schedule — never leaves late. Pro: truck stays hooked to the load, one less drop-and-hook than other lanes. Seen as the model for how all lanes should run.</p>`,
+<p><b>Lane discipline (Lyndi / leadership):</b> Keeping drivers as Oklahoma drivers (either direction) rather than splitting KC vs Dallas — a hard split would lock a driver into one run. Truck delay on this lane is also a load delay (KC→Sapulpa return is the Texas load for the PM driver); no 2-hour fluff like other lanes. Treat it as a sailing schedule — never leaves late. Pro: truck stays hooked to the load, one less drop-and-hook than other lanes. Seen as the model for how all lanes should run.</p>`,
 
     cc147:`<p><b>What went well:</b> All customer loads on time. Found temporary coverage (≈3 weeks) for a Tucson driver on leave of absence using expedited drivers — keeps the miles at no additional cost. Tyler knocked out analytics today (down to three items).</p>
 <p><b>What can be improved / watch:</b> One spot load being rescheduled — departed on time per our schedule; root cause not yet dug into, answers to come. Zeti/team loads doing inventory on the 29th, so loads scheduled to pick up the 29th pushed out — will look for replacement freight.</p>
@@ -683,7 +722,7 @@ function seedBrief0625(){
   };
 
   const amNet=`<p><b>Source:</b> 06/25 Morning Brief — Truck Operations Performance, Route Coverage, Driver Availability &amp; Lytx Follow-ups.</p>
-<p><b>Fleet snapshot (Lindy):</b></p>
+<p><b>Fleet snapshot (Lyndi):</b></p>
 <ul>
 <li>92 trucks yesterday at 718 miles — lower than anticipated (expected ~800).</li>
 <li>13 open shifts, 10 of them out of Indy — the pinch-point opportunity. ~9 pending the Texas/California update.</li>
@@ -697,7 +736,7 @@ function seedBrief0625(){
 <li><b>Holiday week:</b> Real concern about Tue/Wed/Thu going into the holiday given lane structure and RDOs — be aggressive securing freight early. Lean on Travis, Brian &amp; Ashley's teams.</li>
 <li><b>Holiday hours:</b> Brian circling back with Ashley; customer holiday hours expected today/tomorrow — update this afternoon.</li>
 <li><b>DEJOR One incident:</b> Yesterday's tractor-damage incident — driver is denying it; no video, only people who saw it. To be handled offline.</li>
-<li><b>Morning truck count:</b> Ben and Lindy agreed the correct figure is 6 down trucks.</li>
+<li><b>Morning truck count:</b> Ben and Lyndi agreed the correct figure is 6 down trucks.</li>
 </ul>`;
 
   if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
@@ -1060,6 +1099,139 @@ $("#addFromBrief").onclick=()=>{
   renderFus(); openFu(null); $("#fuDate").value=curDate;
 };
 
+/* ---------- import notes (paste & parse) ---------- */
+// Convert a plain-text block into simple safe HTML: bullet lines -> <ul>, others -> <p>
+function notesTextToHTML(text){
+  const lines=text.split(/\r?\n/).map(l=>l.replace(/\s+$/,""));
+  let html="", inList=false;
+  const closeList=()=>{ if(inList){ html+="</ul>"; inList=false; } };
+  lines.forEach(raw=>{
+    const line=raw.trim();
+    if(!line){ closeList(); return; }
+    const bullet=/^[-*•]\s+/.test(line);
+    if(bullet){
+      if(!inList){ html+="<ul>"; inList=true; }
+      html+="<li>"+escapeHtml(line.replace(/^[-*•]\s+/,""))+"</li>";
+    }else{
+      closeList();
+      html+="<p>"+escapeHtml(line)+"</p>";
+    }
+  });
+  closeList();
+  return html;
+}
+// Find a lane by a cost-center token like "151"
+function laneByCC(cc){
+  const norm=String(cc).trim().toLowerCase();
+  return store.lanes.find(L=>String(L.cc).trim().toLowerCase()===norm);
+}
+// Parse pasted text into {net, lanes:{id:html}, owners:{id:[names]}, items:[preview rows]}
+function parseImport(text){
+  const result={net:"", lanes:{}, owners:{}, rows:[]};
+  // split into marker-led chunks
+  const re=/^(NET|CC\s*[\w-]+|OWNERS\s*[\w-]+)\s*:/i;
+  const lines=text.split(/\r?\n/);
+  let cur=null, buf=[];
+  const flush=()=>{
+    if(cur===null) return;
+    const body=buf.join("\n").trim();
+    if(cur.type==="net"){
+      result.net=notesTextToHTML(body);
+      result.rows.push({tag:"NET", label:"Network-wide", snip:body, ok:true});
+    }else if(cur.type==="lane"){
+      if(cur.lane){
+        result.lanes[cur.lane.id]=notesTextToHTML(body);
+        result.rows.push({tag:"CC "+cur.lane.cc, label:cur.lane.lane, snip:body, ok:true});
+      }else{
+        result.rows.push({tag:"CC "+cur.raw, label:"No matching lane — skipped", snip:body, ok:false});
+      }
+    }else if(cur.type==="owners"){
+      if(cur.lane){
+        const names=body.split(/[,;]/).map(s=>s.trim()).filter(Boolean);
+        result.owners[cur.lane.id]=names;
+        result.rows.push({tag:"OWNERS "+cur.lane.cc, label:names.join(", ")||"(cleared)", snip:"", ok:true});
+      }else{
+        result.rows.push({tag:"OWNERS "+cur.raw, label:"No matching lane — skipped", snip:body, ok:false});
+      }
+    }
+    buf=[];
+  };
+  lines.forEach(line=>{
+    const m=line.match(re);
+    if(m){
+      flush();
+      const head=m[1].trim();
+      const rest=line.slice(m[0].length);
+      if(/^NET$/i.test(head)){ cur={type:"net"}; }
+      else if(/^OWNERS/i.test(head)){ const cc=head.replace(/^OWNERS\s*/i,""); cur={type:"owners", raw:cc, lane:laneByCC(cc)}; }
+      else { const cc=head.replace(/^CC\s*/i,""); cur={type:"lane", raw:cc, lane:laneByCC(cc)}; }
+      buf.push(rest);
+    }else{
+      if(cur!==null) buf.push(line);
+    }
+  });
+  flush();
+  return result;
+}
+let lastImport=null;
+function openImport(){
+  $("#importTitle").textContent="Import notes into "+(curPhase==="am"?"Morning Brief":"Afternoon Debrief");
+  $("#importText").value="";
+  $("#importAppend").checked=false;
+  $("#importPreview").style.display="none";
+  $("#importPreview").innerHTML="";
+  $("#importApply").disabled=true;
+  lastImport=null;
+  $("#importOverlay").classList.add("show");
+  setTimeout(()=>$("#importText").focus(),60);
+}
+function closeImport(){ $("#importOverlay").classList.remove("show"); }
+$("#importBriefBtn").onclick=openImport;
+$("#importClose").onclick=closeImport; $("#importCancel").onclick=closeImport;
+$("#importOverlay").onclick=e=>{ if(e.target===$("#importOverlay")) closeImport(); };
+$("#importPreviewBtn").onclick=()=>{
+  const text=$("#importText").value.trim();
+  if(!text){ toast("Paste some notes first"); return; }
+  const parsed=parseImport(text);
+  if(!parsed.rows.length){
+    $("#importPreview").style.display="block";
+    $("#importPreview").innerHTML=`<div class="pv-head">Preview</div><div class="pv-row unmatched"><span class="tag">!</span>No markers found. Start lines with <b>NET:</b> or <b>CC 151:</b></div>`;
+    $("#importApply").disabled=true; lastImport=null; return;
+  }
+  let rowsHtml="";
+  parsed.rows.forEach(r=>{
+    const snip=r.snip ? '<span class="pv-snip">'+escapeHtml(r.snip.slice(0,110))+(r.snip.length>110?"…":"")+"</span>" : "";
+    rowsHtml+=`<div class="pv-row${r.ok?"":" unmatched"}"><span class="tag">${escapeHtml(r.tag)}</span>${escapeHtml(r.label)}${snip?"<br>"+snip:""}</div>`;
+  });
+  $("#importPreview").style.display="block";
+  $("#importPreview").innerHTML=`<div class="pv-head">Preview — ${curPhase.toUpperCase()} · ${$("#importAppend").checked?"append":"replace"}</div>`+rowsHtml;
+  lastImport=parsed;
+  $("#importApply").disabled = !parsed.rows.some(r=>r.ok);
+};
+// re-preview if the append toggle changes after a preview
+$("#importAppend").onchange=()=>{ if(lastImport) $("#importPreviewBtn").click(); };
+$("#importApply").onclick=()=>{
+  if(!lastImport) return;
+  // capture current editor state so we don't lose anything, then merge
+  capturePhaseFromDOM();
+  const p=dayDraft[curPhase];
+  if(!p.lanes) p.lanes={};
+  if(!p.owners) p.owners={};
+  const append=$("#importAppend").checked;
+  const merge=(existing,incoming)=>{
+    if(!incoming) return existing||"";
+    if(append && existing && stripHtml(existing).trim()) return existing+incoming;
+    return incoming;
+  };
+  if(lastImport.net) p.net = merge(p.net, lastImport.net);
+  Object.keys(lastImport.lanes).forEach(id=>{ p.lanes[id]=merge(p.lanes[id], lastImport.lanes[id]); });
+  Object.keys(lastImport.owners).forEach(id=>{ p.owners[id]=lastImport.owners[id].slice(); });
+  renderPhase();
+  closeImport();
+  const n=lastImport.rows.filter(r=>r.ok).length;
+  toast(`Imported ${n} section${n>1?"s":""} — review and Save day`);
+};
+
 /* ---------- export ---------- */
 function getFilteredFus(){
   const q=($("#fuSearch").value||"").toLowerCase();
@@ -1163,6 +1335,8 @@ function briefToPrintHTML(){
     .wrap{padding:18px 20px}
     h2{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:#f37021;margin:0 0 6px;border-bottom:1px solid #dce3ec;padding-bottom:4px}
     .net{background:#fafbfd;border:1px solid #dce3ec;border-radius:8px;padding:11px 13px;margin-bottom:18px}
+    .lane-section{break-before:page;page-break-before:always}
+    .lane-section h2{break-after:avoid;page-break-after:avoid}
     .lanes-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .lane{border:1px solid #dce3ec;border-radius:8px;overflow:hidden;break-inside:avoid}
     .lane-h{background:#fafbfd;border-bottom:1px solid #dce3ec;padding:7px 11px;font-weight:700;color:#0e2a47;font-size:12px}
@@ -1181,8 +1355,10 @@ function briefToPrintHTML(){
     <div class="wrap">
       <h2>Network-wide</h2>
       <div class="net">${netBlock}</div>
-      <h2>By Lane</h2>
-      <div class="lanes-grid">${laneBlocks}</div>
+      <div class="lane-section">
+        <h2>By Lane</h2>
+        <div class="lanes-grid">${laneBlocks}</div>
+      </div>
       <div class="ftr"><span>Generated ${new Date().toLocaleString("en-US")}</span><span>Hirschbach · Expedited Division</span></div>
     </div>
   </body></html>`;
