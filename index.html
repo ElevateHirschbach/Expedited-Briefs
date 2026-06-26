@@ -616,33 +616,49 @@ const CAT_COLORS = {
 
 /* ---------- storage ---------- */
 const K_DAYS="exp_brief_days", K_FU="exp_followups", K_CATS="exp_cats", K_LANES="exp_lanes", K_OWNERS="exp_owners";
+const K_DAY_PREFIX="exp_day_"; // per-day keys: exp_day_2026-06-26 (keeps each write small)
 
 /* ---------- storage adapter ----------
-   Prefers the artifact's window.storage (shared across users) when present.
-   Falls back to the browser's localStorage when hosted on a static site like
-   GitHub Pages / SharePoint (per-browser, persistent). Last resort: in-memory. */
+   Primary store is the browser's localStorage: reliable, ~5MB+, and never throws
+   the shared-backend "internal server error". When the artifact's window.storage
+   is also present, writes are MIRRORED to it best-effort (for cross-device sync),
+   but a failure there is swallowed and never blocks a save. Reads prefer local,
+   then fall back to shared, then memory. */
 const DB = (function(){
   const hasWS = (typeof window!=="undefined" && window.storage
     && typeof window.storage.get==="function" && typeof window.storage.set==="function");
   let hasLS=false;
   try{ const t="__exp_test__"; localStorage.setItem(t,"1"); localStorage.removeItem(t); hasLS=true; }catch(e){ hasLS=false; }
   const mem={};
+  // best-effort mirror to shared storage; never throws
+  async function mirror(op,key,value){
+    if(!hasWS) return;
+    try{
+      if(op==="set") await window.storage.set(key,value,true);
+      else if(op==="del") await window.storage.delete(key,true);
+    }catch(e){ /* shared backend unavailable — ignore, local is the source of truth */ }
+  }
   return {
-    mode: hasWS ? "shared" : (hasLS ? "local" : "memory"),
+    mode: hasLS ? (hasWS?"local+shared":"local") : (hasWS?"shared":"memory"),
     async get(key){
-      if(hasWS){ try{ return await window.storage.get(key,true); }catch(e){ /* fall through */ } }
-      if(hasLS){ const v=localStorage.getItem(key); return (v===null)?null:{key,value:v}; }
+      if(hasLS){ try{ const v=localStorage.getItem(key); if(v!==null) return {key,value:v}; }catch(e){} }
+      if(hasWS){ try{ const r=await window.storage.get(key,true); if(r) return r; }catch(e){} }
       return (key in mem)?{key,value:mem[key]}:null;
     },
     async set(key,value){
-      if(hasWS){ const r=await window.storage.set(key,value,true); return r; }
-      if(hasLS){ localStorage.setItem(key,value); return {key,value}; }
+      if(hasLS){ localStorage.setItem(key,value); mirror("set",key,value); return {key,value}; }
+      if(hasWS){ return await window.storage.set(key,value,true); }
       mem[key]=value; return {key,value};
     },
     async del(key){
+      if(hasLS){ try{ localStorage.removeItem(key); }catch(e){} mirror("del",key); return {key,deleted:true}; }
       if(hasWS){ try{ return await window.storage.delete(key,true); }catch(e){} }
-      if(hasLS){ localStorage.removeItem(key); return {key,deleted:true}; }
       delete mem[key]; return {key,deleted:true};
+    },
+    async list(prefix){
+      if(hasLS){ const out=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(!prefix||k.indexOf(prefix)===0) out.push(k); } return out; }
+      if(hasWS){ try{ const r=await window.storage.list(prefix,true); return (r&&r.keys)||[]; }catch(e){} }
+      return Object.keys(mem).filter(k=>!prefix||k.indexOf(prefix)===0);
     }
   };
 })();
@@ -655,9 +671,26 @@ let store = {
   owners: [...DEFAULT_OWNERS]
 };
 async function load(){
+  // Days are stored one key per day (exp_day_<iso>) so each write stays small and
+  // reliable. Migrate once from the old single-blob key if present (in either store).
   try{
-    const d = await DB.get(K_DAYS); if(d) store.days = JSON.parse(d.value);
-  }catch(e){}
+    let legacyVal=null;
+    try{ const lg=await DB.get(K_DAYS); if(lg) legacyVal=lg.value; }catch(e){}
+    if(legacyVal){
+      let obj={}; try{ obj=JSON.parse(legacyVal)||{}; }catch(e){ obj={}; }
+      for(const iso of Object.keys(obj)){
+        try{ await DB.set(K_DAY_PREFIX+iso, JSON.stringify(obj[iso])); }catch(e){ /* skip this day, keep going */ }
+      }
+      try{ await DB.del(K_DAYS); }catch(e){}
+    }
+  }catch(e){ console.error("day migration",e); }
+  // Load all per-day keys
+  try{
+    const keys = await DB.list(K_DAY_PREFIX);
+    for(const k of keys){
+      try{ const d=await DB.get(k); if(d){ const iso=k.slice(K_DAY_PREFIX.length); store.days[iso]=JSON.parse(d.value); } }catch(e){}
+    }
+  }catch(e){ console.error("day load",e); }
   try{
     const f = await DB.get(K_FU); if(f) store.fus = JSON.parse(f.value);
   }catch(e){}
@@ -670,18 +703,18 @@ async function load(){
   try{
     const o = await DB.get(K_OWNERS); if(o){ const arr=JSON.parse(o.value); if(Array.isArray(arr)) store.owners=arr; }
   }catch(e){}
-  seedDebrief0624();
-  seedBrief0625();
-  seedDebrief0625();
-  seedBrief0626();
-  seedDebrief0626();
-  seedFollowups();
+  await seedDebrief0624();
+  await seedBrief0625();
+  await seedDebrief0625();
+  await seedBrief0626();
+  await seedDebrief0626();
+  await seedFollowups();
 }
 
 /* One-time seed: action items captured from the 6/26 brief. Each is added only
    once (tracked by a stable id), so it won't duplicate or resurrect if deleted
    after the flag is set. */
-function seedFollowups(){
+async function seedFollowups(){
   const FLAG="exp_seed_fu_0626_v1";
   let already=false;
   try{ already = !!localStorage.getItem(FLAG); }catch(e){}
@@ -697,12 +730,12 @@ function seedFollowups(){
     if(!store.fus.some(f=>f.id===it.id)){ store.fus.push(it); added++; }
   });
   try{ localStorage.setItem(FLAG,"1"); }catch(e){}
-  if(added) saveFus();
+  if(added) await saveFus();
 }
 
 /* One-time seed: 6/24 afternoon debrief notes from the operational debrief call.
    Only applied if that day's PM debrief is still empty, so it never overwrites edits. */
-function seedDebrief0624(){
+async function seedDebrief0624(){
   const iso="2026-06-24";
   const FORCE_KEY="exp_force_restore_0624_pm_v1";
   const existing=store.days[iso];
@@ -771,12 +804,12 @@ function seedDebrief0624(){
   store.days[iso].pm.lanes=pmLanes;
   store.days[iso].savedAt=new Date().toISOString();
   try{ localStorage.setItem(FORCE_KEY,"1"); }catch(e){}
-  saveDays();
+  await saveDays(iso);
 }
 
 /* One-time seed: 6/25 morning brief from the Truck Operations Performance call.
    Only applied if that day's AM brief is still empty, so it never overwrites edits. */
-function seedBrief0625(){
+async function seedBrief0625(){
   const iso="2026-06-25";
   const existing=store.days[iso];
   const amHasContent = existing && existing.am &&
@@ -856,12 +889,12 @@ function seedBrief0625(){
   store.days[iso].am.net=amNet;
   store.days[iso].am.lanes=amLanes;
   store.days[iso].savedAt=new Date().toISOString();
-  saveDays();
+  await saveDays(iso);
 }
 
 /* One-time seed: 6/25 afternoon debrief from the Daily Operations, Trailer
    Management & AS/400 Planning Updates call. Applied only if 6/25 PM is empty. */
-function seedDebrief0625(){
+async function seedDebrief0625(){
   const iso="2026-06-25";
   const existing=store.days[iso];
   const pmHasContent = existing && existing.pm &&
@@ -910,12 +943,12 @@ function seedDebrief0625(){
   store.days[iso].pm.net=pmNet;
   store.days[iso].pm.lanes=pmLanes;
   store.days[iso].savedAt=new Date().toISOString();
-  saveDays();
+  await saveDays(iso);
 }
 
 /* One-time seed: 6/26 morning brief from the Weekly Meeting — Daily Operations,
    Performance Review & Freight Planning call. Applied only if 6/26 AM is empty. */
-function seedBrief0626(){
+async function seedBrief0626(){
   const iso="2026-06-26";
   const existing=store.days[iso];
   const amHasContent = existing && existing.am &&
@@ -982,12 +1015,12 @@ function seedBrief0626(){
   store.days[iso].am.net=amNet;
   store.days[iso].am.lanes=amLanes;
   store.days[iso].savedAt=new Date().toISOString();
-  saveDays();
+  await saveDays(iso);
 }
 
 /* One-time seed: 6/26 afternoon debrief from the Lane Performance, Freight Backlog,
    Equipment Inspections & Holiday Operations call. Applied only if 6/26 PM is empty. */
-function seedDebrief0626(){
+async function seedDebrief0626(){
   const iso="2026-06-26";
   const existing=store.days[iso];
   const pmHasContent = existing && existing.pm &&
@@ -1044,9 +1077,16 @@ function seedDebrief0626(){
   store.days[iso].pm.net=pmNet;
   store.days[iso].pm.lanes=pmLanes;
   store.days[iso].savedAt=new Date().toISOString();
-  saveDays();
+  await saveDays(iso);
 }
-async function saveDays(){ try{ await DB.set(K_DAYS, JSON.stringify(store.days)); return true;}catch(e){ console.error("saveDays failed",e); return false;} }
+async function saveDays(iso){
+  // Save one day per key so writes stay small. Defaults to the current operating day.
+  const target = iso || curDate;
+  try{
+    if(store.days[target]){ await DB.set(K_DAY_PREFIX+target, JSON.stringify(store.days[target])); }
+    return true;
+  }catch(e){ console.error("saveDays failed",e); return false; }
+}
 async function saveFus(){ try{ const r=await DB.set(K_FU, JSON.stringify(store.fus)); return r!==null && r!==undefined;}catch(e){ console.error("saveFus failed",e); return false;} }
 async function saveCats(){ try{ await DB.set(K_CATS, JSON.stringify(store.cats)); return true;}catch(e){ console.error("saveCats failed",e); return false;} }
 async function saveLanes(){ try{ await DB.set(K_LANES, JSON.stringify(store.lanes)); return true;}catch(e){ console.error("saveLanes failed",e); return false;} }
