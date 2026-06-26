@@ -674,6 +674,7 @@ async function load(){
   seedBrief0625();
   seedDebrief0625();
   seedBrief0626();
+  seedDebrief0626();
   seedFollowups();
 }
 
@@ -980,6 +981,68 @@ function seedBrief0626(){
   if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
   store.days[iso].am.net=amNet;
   store.days[iso].am.lanes=amLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  saveDays();
+}
+
+/* One-time seed: 6/26 afternoon debrief from the Lane Performance, Freight Backlog,
+   Equipment Inspections & Holiday Operations call. Applied only if 6/26 PM is empty. */
+function seedDebrief0626(){
+  const iso="2026-06-26";
+  const existing=store.days[iso];
+  const pmHasContent = existing && existing.pm &&
+    (stripHtml(existing.pm.net||"").trim() || Object.values(existing.pm.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(pmHasContent) return;
+
+  const pmLanes={
+    cc152:`<p><b>What went well (Josh):</b> Indy → Kansas City made up ground — 8 of 8 drivers running, 7 loaded (only one segment unloaded). "Needed about six miracles this afternoon and came up with five."</p>
+<p><b>Big play:</b> Shout-out to Nate — picked up Conagra shipper-pickup loads out of Marshall, MO and worked with planning to get drivers loaded on the KC side.</p>
+<p><b>What can be improved:</b> Finding extra drivers to work extra shifts in Indy to help Lacey and Allen.</p>`,
+
+    cc135:`<p><b>Rough day (Sean) — set to run 4 of 8; "a bloodbath."</b></p>
+<ul>
+<li>Two cracked cross-member trailers failed inspection again (seems to be at least one almost every day), plus two loads that didn't make the yard in time — that's what brought us to four.</li>
+<li>Still waiting on one inspection hitting the yard 7 PM tonight; if it comes back bad we could run only three.</li>
+<li>Tomorrow's outlook: two loads cancelled (Costco and Tyson) and another early-yard load failed inspection for a cracked rail/cross member.</li>
+</ul>
+<p><b>Improvement:</b> Keep a list of which trailers aren't passing and identify them before they reach the yard/inspection point.</p>
+<p><b>Freight call:</b> Has enough Texas freight; the Carthage, TX Tyson loads have been burning us repeatedly — will run those OTR and stay out of Carthage (too inconsistent).</p>
+<p><b>Inspection standard:</b> TJ/Travis raised one-cross-member vs. three out-of-service. Sean to ask Aurora whether they'll loosen on the cross-member stance — unsure they will, but worth the conversation given how hard we've been hit.</p>
+<p><b>Holiday note:</b> Aurora won't run on July 4th, so the July 3 PM shift can't run (would leave loads sitting in El Paso with too much dwell time and late risk).</p>`,
+
+    cc148:`<p><b>Allen — Indy → North Carolina:</b> Two OTR fill-ins for tonight; AM and PM both running full, getting as many miles as possible. Still finishing the weekend plan; waiting to get the North Carolina new hires into place. Overall looking good.</p>`,
+
+    cc149:`<p><b>Lacey — Bedford:</b> 7 of 8 departures for the day; used one OTR fill-in. Found three total expedited fill-ins between both lanes.</p>`,
+
+    cc154:`<p><b>Lacey — Carlisle:</b> Ran 6 of 8. A driver called out sick, so used an OTR fill-in to meet the swap. Needs drivers — one no-show; two came through but they're on the PA side (not where they're needed right now). A rehire who was coming back decided not to (reason unknown). Last drug screen: done on our end, compliance aware — the clinic provider shut down early today (sick).</p>`,
+
+    cc151:`<p><b>Joe — 5 of 8 departures (open shifts).</b> People in orientation and one ride-along (good). Seat-belt note from earlier is fixed. Ran one empty move from adding a driver where the prior shift didn't have the same load count for passover.</p>
+<p><b>Freight need:</b> Monday is a mix and thin — needs Kansas → Texas freight specifically (has Texas → Kansas to plug in). Working all weekend on it. Tuesday and Wednesday are fairly filled and in good shape; just the Monday piece outstanding.</p>`,
+
+    cc147:`<p><b>Regina — full departures, no issues; everything on time.</b></p>
+<ul>
+<li>A Q-truck is moving to Denton today (needed out of inventory); another turn-in truck (8140) is being moved across for Lyndi/John.</li>
+<li>Will end up short a truck unless something in Denton is ready or the Sapulpa trucks have moved down — John has a truck and will send it over.</li>
+<li>Logistics knocked out; still full on freight; saw more drop in for next week. Looking for one load for the 30th to be full; then full through the 4th.</li>
+</ul>
+<p><b>Question:</b> Are shippers open on the 3rd and 4th? (Ashley: many will be open, some preload early, some limited hours — still working through it; Monday PM she'll review all loads and double-check the targeted lanes.)</p>`
+  };
+
+  const pmNet=`<p><b>Source:</b> 06/26 Afternoon Debrief — Lane Performance, Freight Backlog, Equipment Inspections &amp; Holiday Operations.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Equipment / cross-member inspections:</b> Recurring cracked cross-member failures (esp. CC 135) are a daily hit. Action items: Sean to keep a watch-list of failing trailers to catch them pre-yard, and to ask Aurora about one-vs-three cross-member out-of-service criteria.</li>
+<li><b>Pepsi / Edgerton backlog:</b> ~25 loaded Pepsi trailers sitting in Edgerton, KS (the Indy → KS lane) that we can't use for loading. Brian Ford (now leading the Smucker's team) is on it; Nick Scholes flagged it. Update expected Monday.</li>
+<li><b>Seated truck count:</b> ~93 right now (elevated). Three Q-trucks coming out and one brought-in truck returning on CC 148 tonight — expected down to ~89–90 by end of day / into tomorrow.</li>
+<li><b>Holiday operations (July 3–4):</b> Many shippers open, some preloading early, some limited hours — still being worked. Aurora closed the 4th means CC 135's July 3 PM shift won't run. Ashley to review all holiday loads Monday PM and confirm the targeted lanes.</li>
+<li><b>Driver video:</b> Lyndi/John sent the driver video out — encourage drivers to view it over the weekend.</li>
+<li><b>Sheet update:</b> The brief/debrief sheet looks different today; continuing to tweak it, with more updates expected next week.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].pm) store.days[iso].pm={net:"",lanes:{}};
+  store.days[iso].pm.net=pmNet;
+  store.days[iso].pm.lanes=pmLanes;
   store.days[iso].savedAt=new Date().toISOString();
   saveDays();
 }
