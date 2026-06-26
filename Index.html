@@ -583,7 +583,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const DEFAULT_OWNERS = ["Allen Allday","Amye Alvarez","Angela Lazarin","Bonnie Brooks","Brandon Reyna","Brian Stewart","Bryan Ryder","Casey Raick","Cecil Watts","Chelsie Bebber","David Klement","Joe Adams","John Hessler","Jordan Fream","Josh Catton","Krista Vokey","Lacey Curry","Lyndi Curry","Mike Howell","Nate Kratz","Regina Henson","Rober Williams","Samsung Rivera","Sara Weltz","Sean Moser","Tyler Romine"];
+const DEFAULT_OWNERS = ["Allen Allday","Amye Alvarez","Angela Lazarin","Bonnie Brooks","Brandon Reyna","Brian Stewart","Bryan Ryder","Casey Raick","Cecil Watts","Chelsie Bebber","David Klement","Joe Adams","John Hessler","Jordan Fream","Josh Catton","Krista Vokey","Kristi Noland","Lacey Curry","Lyndi Curry","Mike Howell","Nate Kratz","Regina Henson","Rober Williams","Samsung Rivera","Sara Weltz","Sean Moser","Tyler Romine"];
 const DEFAULT_CATS = ["Maintenance","Driver","Equipment","Planning","Loads"];
 
 /* Lanes from the Daily Tracker. Each gets its own notes section per phase. */
@@ -634,6 +634,31 @@ async function load(){
   }catch(e){}
   seedDebrief0624();
   seedBrief0625();
+  seedDebrief0625();
+  seedBrief0626();
+  seedFollowups();
+}
+
+/* One-time seed: action items captured from the 6/26 brief. Each is added only
+   once (tracked by a stable id), so it won't duplicate or resurrect if deleted
+   after the flag is set. */
+function seedFollowups(){
+  const FLAG="exp_seed_fu_0626_v1";
+  let already=false;
+  try{ already = !!localStorage.getItem(FLAG); }catch(e){}
+  if(already) return;
+  const seedItems=[
+    { id:"seed_fu_recruiting_0626", date:"2026-06-26", due:"2026-06-26", cat:"Planning",
+      owner:"Kristi Noland", notes:"<p>Add recruiting to this call daily.</p>", done:false, compNotes:"" },
+    { id:"seed_fu_ro_320832_0626", date:"2026-06-26", due:"2026-06-26", cat:"Maintenance",
+      owner:"Lyndi Curry", notes:"<p>Research truck 320832 — has no RO created but is in S status.</p>", done:false, compNotes:"" }
+  ];
+  let added=0;
+  seedItems.forEach(it=>{
+    if(!store.fus.some(f=>f.id===it.id)){ store.fus.push(it); added++; }
+  });
+  try{ localStorage.setItem(FLAG,"1"); }catch(e){}
+  if(added) saveFus();
 }
 
 /* One-time seed: 6/24 afternoon debrief notes from the operational debrief call.
@@ -785,6 +810,132 @@ function seedBrief0625(){
 <li><b>Holiday hours:</b> Brian circling back with Ashley; customer holiday hours expected today/tomorrow — update this afternoon.</li>
 <li><b>DEJOR One incident:</b> Yesterday's tractor-damage incident — driver is denying it; no video, only people who saw it. To be handled offline.</li>
 <li><b>Morning truck count:</b> Ben and Lyndi agreed the correct figure is 6 down trucks.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
+  store.days[iso].am.net=amNet;
+  store.days[iso].am.lanes=amLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  saveDays();
+}
+
+/* One-time seed: 6/25 afternoon debrief from the Daily Operations, Trailer
+   Management & AS/400 Planning Updates call. Applied only if 6/25 PM is empty. */
+function seedDebrief0625(){
+  const iso="2026-06-25";
+  const existing=store.days[iso];
+  const pmHasContent = existing && existing.pm &&
+    (stripHtml(existing.pm.net||"").trim() || Object.values(existing.pm.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(pmHasContent) return;
+
+  const pmLanes={
+    cc135:`<p><b>What went well (Sean):</b> Set to run 6 of 8 — no change since this morning. Got loads to the yard early, which went well.</p>
+<p><b>What can be improved:</b> Inspection turnaround. Two trailers for the evening depart are at the yard waiting on Aurora to return inspection info; trailers arrive early but inspections wait until afternoon, and if something needs fixing it limits how we can move things around.</p>
+<p><b>Status:</b> Loads yellow (6 of 8). Equipment yellow — still pending inspections. Other yellow — staffing limited an additional depart.</p>
+<p><b>Commitment:</b> Keep working with Aurora to speed up the inspection piece.</p>`,
+
+    cc152:`<p><b>What went well (Josh):</b> Good Indy → Kansas City afternoon — 8 of 8 loaded. (Morning was 6 of 8 with open shifts.)</p>
+<p><b>Save:</b> ~45 min ago a driver at the shipper (Smithfield Foods, Lincoln NE) for an early-AM depart was pulled — load wasn't ready, short trailers there. Caught it; a driver checked in at Junction City doesn't have hours to reach the yard tonight but can load on time, so the local will go save that load and bring it to the yard — AM depart saved.</p>
+<p><b>What can be improved:</b> Trailer situation in Nebraska (ND area very tight on capacity) — possibly one empty move in the morning, still TBD. Drivers box yellow (open shifts); load box red (capacity).</p>`,
+
+    cc148:`<p><b>Allen — 148 Indy → North Carolina:</b> One OTR fill-in for tonight; AM all running full shift with expedited drivers. Planning looks good heading into the weekend.</p>
+<p><b>Note:</b> Two no-departs this morning on the Indy side — one was the driver whose daughter got sick, the other an OTR fill-in covering. Still dispatching the PM shift.</p>`,
+
+    cc149:`<p><b>Lacey — Bedford:</b> 3 of 4 PMs departing tonight; 6 of 8 for the day. The two empty moves this morning still departed with one load. Got three randoms completed (two more scheduled tomorrow). Short one depart in the morning due to an open shift.</p>`,
+
+    cc154:`<p><b>Lacey — Carlisle:</b> Two of four departed the first night; with the extra one added this morning it ended up 7 of 8 (down two, offset by the extra).</p>
+<p><b>Accident:</b> A driver pulling out of the scale hit another trailer — our load has significant trailer damage and must be transloaded. Were waiting on permission to cut the seal (Nate working it); being towed now. Customer is Smithfield; main concern is the swap partner's Walmart load, which Lacey got switched to run on the other lane. More updates to follow.</p>`,
+
+    cc151:`<p><b>Joe — this morning:</b> 3 parts to Texas and 2 to Kansas (every lane currently filled). This morning and afternoon will have three empty moves: one is the first run of a lane (must go up empty to start the cycle), the other two are short freight.</p>
+<p><b>Hiring/build-out:</b> New hire doing a ride-along today; three more hopefully get drug screens in the morning to ride and start Sat/Sun. An OTR driver is transferring in (turning in his truck tomorrow), moving from 101 to 151, starting Saturday on a 2 AM shift. Target remains 16 departs; 5 pending hires in orientation/starting next week — if all five show up clean, the lane will be full.</p>`,
+
+    cc147:`<p><b>Regina — California/Texas:</b> Full on the parts. Tucson call-out covered with an expedited driver — went well. Lytx caught up (one left for Jordan to remove). All loads running on time for on-time delivery; one driver delayed in Tucson for a tire repair is fixed and rolling, will make up time Las Cruces → Tooele tonight.</p>
+<p><b>What can be improved:</b> Still juggling next-week freight — a forever-moving target as shippers change things; spent a lot of time on it today.</p>
+<p><b>Commitment:</b> Get safety calls back on track — PSCs have slipped while spending more time on freight than drivers; commit to reaching at least five drivers a day for check-ins.</p>`
+  };
+
+  const pmNet=`<p><b>Source:</b> 06/25 Afternoon Debrief — Daily Operations, Trailer Management &amp; AS/400 Planning Updates.</p>
+<p><b>Process change (Kristi):</b> Added a <b>planned parts</b> field in the morning and an <b>actual parts</b> field on the debrief, so leaders not in the spreadsheet daily (Ashley, Travis) can see planned-vs-actual departs per lane at a glance. Fill these in when updating the brief/debrief.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Trailers at Sapulpa (decon lot):</b> Four usable trailers have been sitting on the Sapulpa decon lot — saved for expedited but forgotten; they show on the stale-trailer report. Verify tires before use (one had a flat, other three fine). Shop was told Monday to move them down; still on the lot. Action: move them down and have the group learn the new trailer report (built with the trailer A3 team / Christina) — it's been spot-on; Kristi to share the link and walk the group through access at tomorrow's meeting.</li>
+<li><b>Laredo trailers:</b> ~40 trailers in Laredo (Driscoll's) — not being aggressively pulled since they're needed back there in ~2 months; priority is moving steel trailers from other markets first.</li>
+<li><b>AS/400 POA vs OM:</b> Most lanes use the OM field (the standard process) rather than the POA field for first-mile freight needing OTR planner help (CC 147 N/A). Kristi gathering current practice as the process evolves.</li>
+<li><b>Safety / Lytx:</b> Nate — focus on miles with expedited drivers and on safety; the accident driver fully owned his mistake and discussed what to do differently (a positive in a tough moment).</li>
+<li><b>Customer Service (Ashley):</b> Nobody's done anything wrong — learning each lane's process to make load identification easier and more automated; will call Regina and Lacey tomorrow with individual questions.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].pm) store.days[iso].pm={net:"",lanes:{}};
+  store.days[iso].pm.net=pmNet;
+  store.days[iso].pm.lanes=pmLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  saveDays();
+}
+
+/* One-time seed: 6/26 morning brief from the Weekly Meeting — Daily Operations,
+   Performance Review & Freight Planning call. Applied only if 6/26 AM is empty. */
+function seedBrief0626(){
+  const iso="2026-06-26";
+  const existing=store.days[iso];
+  const amHasContent = existing && existing.am &&
+    (stripHtml(existing.am.net||"").trim() || Object.values(existing.am.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(amHasContent) return;
+
+  const amLanes={
+    cc135:`<p><b>Rough morning (Sean).</b></p>
+<ul>
+<li>Two AM-depart loads out of Arizona did not make the yard. Planning never planned them last night — should have pulled other freight off and prioritized; not caught until late. Travis's team has addressed it. Late customer: Coke.</li>
+<li>Texas-side trailer with broken cross members can't run — moving things around; planning 2–3 departures on Texas/Arizona depending on whether another yard trailer passes inspection.</li>
+<li>El Paso ABS-light load: tech fixed it at 3 AM, but it failed again at the morning inspection — that load will be late. Two other loads from that location can still move. Another load cancelled; still working today's freight.</li>
+</ul>
+<p><b>Cross-member note:</b> ~30% of trailers dropped have a cross-member situation. Aurora shuts these down because they run an enhanced pre-trip to skip the scale (specific to Aurora).</p>`,
+
+    cc152:`<p><b>Rough night (Josh) — 6 of 8 departures.</b> The 1 and 2 didn't run due to an open shift.</p>
+<ul>
+<li>Two of the six segments ran empty: one was Indianapolis capacity planning struggling to get a Kroger load loaded (T-called for us); the other was Pepsi on the Indy→KC lane for Edgerton, supposed to be preloaded and wasn't. Trip numbers are in the notes.</li>
+<li><b>For Ashley/Brian:</b> local driver reports ~20–25 dropped, loaded trailers sitting at the Edgerton (KS) final — possible trailer-storage/detention to look into; a lot of trailers we can't use.</li>
+</ul>
+<p><b>Worried about this afternoon:</b> ~9 loads won't make the yard (Smithfield, Tyson, Cargill) — delayed for product issues or no trailers in areas 4 and 5. Will get creative with Andrew. Heavy reliance on protein customers in 4/5; hoping to diversify with Hostess and others in KC. Has a driver going into Hostess for Edgerton; 3–4 set to preload by 10–11 PM tonight.</p>`,
+
+    cc148:`<p><b>Lacey (Speaker 7):</b> Indy ↔ North Carolina using one OTR fill-in; the rest expedited full. Full PM departs last night and full departs again today. Working to get everything planned properly and as far forward as possible.</p>`,
+
+    cc149:`<p><b>Bedford (Speaker 8):</b> Likely down one depart today through tonight due to open positions.</p>`,
+
+    cc154:`<p><b>Carlisle (Speaker 8):</b> Thought we were down three, but may have pieced together a sixth — so possibly 6 departs. Constraint: a random drug test needs completing and the driver has to come in three hours early, which makes him hard to run.</p>`,
+
+    cc151:`<p><b>Sarah — 4 departures this morning; lane should be fine.</b></p>
+<ul>
+<li>A couple late starts: one driver had to wait out a 10-hour HOS reset; another got bogged down at a scale.</li>
+<li>One truck was switched and the load moved this morning — notes left didn't explain why; still digging into the particulars.</li>
+<li>Freight booking looks decent; lots flagged to add. Goal today: work the sheet so loads are where they need to be.</li>
+</ul>
+<p><b>Tyson drop-window effort (Sarah + John):</b> Reached out to Tyson to get delivery windows on Kansas→Texas freight. Today we only drop at Sherman; if we could drop at Haltom City / North Richland Hills with a window opened to noon, it'd open more options out of areas 3 and 5 into Texas. North Richland allows only one drop at a time — asked them to mark those as EXP in the OM so OTR doesn't grab them. Was being looked into Mon/Tue; Sarah back today and following up.</p>`,
+
+    cc147:`<p><b>Regina &amp; Tyler — full departures yesterday.</b></p>
+<ul>
+<li>Some loads running a little behind: a fatality accident closed I-10 eastbound ~4 hours overnight; Davey rerouted drivers around it so they didn't get stuck, but there were late departs out of Las Cruces this morning. Still good for on-time delivery; parts all there.</li>
+<li>Plan today: keep looking for loads to plug in and stay full on the parts.</li>
+</ul>
+<p><b>What works on this lane (Tyler):</b> With two of them on a high-volume lane, Tyler handles the majority of issues and driver needs (truck swaps, etc.) while Regina is freed up to find solutions, shuffle loads, and plan — almost a dedicated planner to the lane. Keeps drivers moving; offered as a model worth noting (not necessarily one-size-fits-all).</p>`
+  };
+
+  const amNet=`<p><b>Source:</b> 06/26 Weekly Meeting — Daily Operations, Performance Review &amp; Freight Planning.</p>
+<p><b>Fleet snapshot (Lyndi):</b></p>
+<ul>
+<li>94 trucks yesterday; miles per truck down to 686 — not an awesome day, but explainable. A wrecked truck was removed from the list this morning.</li>
+<li>12 open shifts (working with Ben). ~10.5 opportunities; CC 147 was clean both nights so its lower miles trace to the midnight-snapshot dispatch/empty timing, not a miss.</li>
+<li>Down trucks: 2 matched with Ben, plus one more in F status with <b>no RO open</b> — dig into truck 3-2-8-3-2 and find out why there's no RO. Autonomous-to-parts: 6.</li>
+<li>Confidence the miles per truck recover once CC 151 (Oklahoma hub) runs full and its 9 trucks get drivers and go full-to-parts.</li>
+</ul>
+<p><b>Lytx (Lyndi):</b> 22 coachings, 1 overdue. Focus areas for Z-calls: following distance (#1), other distractions (cell phones, eating/drinking, looking away), inattentive, and seatbelt — the quick win (incl. Lacey's driver who wears it but not correctly). Progress on speeding violations.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Freight ownership / EXP marking:</b> Big discussion — vision is Customer Service + Sales fill the sheet and Planning owns getting freight to the yard on time (planned 5–6 days out), so EXP teams never hunt freight in planning screens and can focus on drivers. Today the sheet still requires operational adjustment. Clarify EXP vs EXPE: <i>EXP</i> = expedited intends to run it (entered by us); <i>EXP</i> (no E) = CSR/planner set aside for us; <i>EXPE</i> = acknowledged/held for expedited (via Freight Science). Richard/Ashley/Travis to set a line-in-the-sand date for CS &amp; Planning to complete the handoff.</li>
+<li><b>Performance pressure (Richard):</b> Operating ratio over 100 (lost money) vs. target high-70s/low-80s; every missed load, OTR fill, and open position weighs on it. 12 open positions; turnover far above the &lt;10% target. Drivers must come first; lanes must leave on time, every time. Recruiting should be on this call daily. Don't disregard leadership direction to freelance freight — it's eroding trust.</li>
+<li><b>Wins (Nate):</b> Strong week filling open shifts with expedited drivers — good setup heading into the weekend.</li>
+<li><b>Follow-up:</b> Kristi meeting with Travis's team and circling back with Ashley this afternoon on making freight easier to identify/mark; Darren &amp; Ashley also in conversation. Updates expected at the afternoon debrief.</li>
 </ul>`;
 
   if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
