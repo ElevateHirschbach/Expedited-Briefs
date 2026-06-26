@@ -1,0 +1,2006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expedited Daily Brief & Debrief</title>
+<style>
+  :root{
+    --navy:#0e2a47;
+    --navy-2:#163b61;
+    --orange:#f37021;
+    --orange-soft:#fff1e8;
+    --ink:#1b2733;
+    --muted:#64748b;
+    --line:#dce3ec;
+    --bg:#f5f7fa;
+    --card:#ffffff;
+    --green:#1f9d57;
+    --green-soft:#e8f6ee;
+    --shadow:0 1px 3px rgba(14,42,71,.08),0 4px 14px rgba(14,42,71,.06);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45;
+  }
+  header.app{
+    background:linear-gradient(110deg,var(--navy),var(--navy-2));
+    color:#fff;padding:14px 22px;display:flex;align-items:center;gap:16px;
+    position:sticky;top:0;z-index:40;box-shadow:0 2px 10px rgba(0,0,0,.18);
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .mark{width:38px;height:38px;border-radius:9px;background:var(--orange);
+    display:grid;place-items:center;font-weight:800;font-size:18px;color:#fff;
+    box-shadow:0 2px 6px rgba(243,112,33,.5)}
+  .brand h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.2px}
+  .brand .sub{font-size:11.5px;color:#aac4dd;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+  .datebox{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .datebox label{font-size:11px;color:#aac4dd;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  .datebox input{border:0;border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--navy)}
+  .nav{display:flex;gap:4px;background:#fff;padding:0 22px;border-bottom:1px solid var(--line);
+    position:sticky;top:66px;z-index:30}
+  .nav button{background:none;border:0;padding:13px 16px;font-size:13.5px;font-weight:600;
+    color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;display:flex;align-items:center;gap:7px}
+  .nav button:hover{color:var(--navy)}
+  .nav button.active{color:var(--navy);border-bottom-color:var(--orange)}
+  .nav .pill{background:var(--orange);color:#fff;border-radius:20px;font-size:11px;
+    padding:1px 7px;font-weight:700;min-width:18px;text-align:center}
+  .nav .pill-muted{background:#94a3b8}
+  .stat-link{cursor:pointer;transition:border-color .15s,box-shadow .15s}
+  .stat-link:hover{border-color:var(--green);box-shadow:0 2px 10px rgba(31,157,87,.18)}
+  .stat-link .n{color:var(--green)}
+  .archive-hint{font-size:12.5px;color:var(--muted)}
+  .archive-hint a{color:var(--orange);font-weight:700;text-decoration:none}
+  .archive-hint a:hover{text-decoration:underline}
+  .muted-count{color:var(--muted);font-weight:600;font-size:14px}
+  main{max-width:1240px;margin:0 auto;padding:22px}
+  .view{display:none}
+  .view.active{display:block}
+
+  /* phase toggle */
+  .phase-toggle{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:11px;
+    padding:4px;gap:4px;box-shadow:var(--shadow)}
+  .phase-btn{border:0;background:none;padding:9px 18px;border-radius:8px;font-size:14px;font-weight:700;
+    color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:9px;font-family:inherit}
+  .phase-btn.active{background:var(--navy);color:#fff}
+  .phase-btn.active .tag{background:rgba(255,255,255,.18);color:#fff}
+  .phase-purpose{color:var(--muted);font-size:12.5px;margin:10px 2px 18px}
+  .net-card{margin-bottom:18px;border-left:4px solid var(--orange)}
+  .net-dot{color:var(--orange);font-size:13px}
+  .lane-section-title{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);
+    font-weight:700;margin:4px 2px 12px;display:flex;align-items:center;gap:10px}
+  .lane-section-title:after{content:"";flex:1;height:1px;background:var(--line)}
+  #laneCards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .lane-card{background:var(--card);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);overflow:hidden}
+  .lane-card .lhead{padding:11px 15px;border-bottom:1px solid var(--line);background:#fafbfd}
+  .lane-card .cc{font-size:10.5px;font-weight:800;letter-spacing:.5px;color:var(--orange)}
+  .lane-card .ln{font-size:13.5px;font-weight:700;color:var(--navy);margin-top:1px}
+  .lane-card .ow{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .lane-card .lbody{padding:13px 15px}
+  .lane-card .filled-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--line);margin-left:auto}
+  .lane-card .lhead{display:flex;align-items:flex-start;gap:8px}
+  .lane-card .lhead .meta{flex:1}
+  .lane-card.has .filled-dot{background:var(--green)}
+
+  /* manage lanes */
+  .lanes-note{color:var(--muted);font-size:12.5px;margin:0 2px 16px;max-width:760px;line-height:1.55}
+  #laneTable .drag{cursor:grab;color:#b6c1cd;text-align:center;font-size:16px;user-select:none}
+  #laneTable .drag:active{cursor:grabbing}
+  #laneTable tr.dragging{opacity:.4}
+  #laneTable tr.drop-above td{box-shadow:inset 0 2px 0 var(--orange)}
+  #laneTable tr.drop-below td{box-shadow:inset 0 -2px 0 var(--orange)}
+  #laneTable .cc-pill{font-weight:800;color:var(--orange);font-size:12.5px}
+  #laneTable .lane-name{font-weight:600;color:var(--navy)}
+  .lane-arrow-help{font-size:12px;color:var(--muted);margin:10px 2px 0}
+  .link-btn{border:0;background:none;color:var(--orange);font-weight:700;cursor:pointer;font-size:12px;padding:0 2px;font-family:inherit}
+  .link-btn:hover{text-decoration:underline}
+  /* multi-owner chip picker on brief lane cards */
+  .ow{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-top:3px}
+  .ow-label{font-size:11px;color:var(--muted);font-weight:600}
+  .owner-chips{display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center}
+  .owner-chip{display:inline-flex;align-items:center;gap:3px;background:var(--orange-soft);color:var(--orange);
+    border-radius:20px;padding:2px 4px 2px 9px;font-size:11.5px;font-weight:700}
+  .owner-chip .chip-x{border:0;background:none;color:var(--orange);cursor:pointer;font-size:14px;line-height:1;
+    padding:0 2px;border-radius:50%}
+  .owner-chip .chip-x:hover{background:rgba(243,112,33,.22)}
+  .owner-add-sel{border:1px dashed var(--line);border-radius:20px;background:#fff;font-family:inherit;
+    font-size:11px;color:var(--muted);padding:2px 6px;cursor:pointer}
+  .owner-add-sel:hover{border-color:var(--orange);color:var(--orange)}
+  .owner-add-sel:focus{outline:none;border-color:var(--orange);color:var(--navy)}
+  /* owner roster */
+  .owner-add-row{display:flex;gap:8px;margin-bottom:14px;max-width:480px}
+  .owner-add-row input{flex:1}
+  #ownerTable .owner-name{font-weight:600;color:var(--navy)}
+  /* import notes modal */
+  .import-help{color:var(--muted);font-size:12.5px;margin:0 0 10px;line-height:1.55}
+  .import-legend{background:#fafbfd;border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:12px;color:var(--ink);line-height:1.9}
+  .import-legend code{background:var(--orange-soft);color:var(--orange);border-radius:5px;padding:1px 6px;font-weight:700;font-size:11.5px}
+  .import-preview{margin-top:14px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .import-preview .pv-head{background:var(--navy);color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:7px 12px}
+  .import-preview .pv-row{padding:9px 12px;border-bottom:1px solid var(--line);font-size:12.5px}
+  .import-preview .pv-row:last-child{border-bottom:0}
+  .import-preview .pv-row .tag{display:inline-block;font-weight:700;color:var(--orange);font-size:11px;margin-right:8px;min-width:64px}
+  .import-preview .pv-row.unmatched{background:#fde8e8}
+  .import-preview .pv-row.unmatched .tag{color:#c0392b}
+  .import-preview .pv-snip{color:var(--muted)}
+  .export-menu{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);
+    border-radius:11px;box-shadow:0 8px 30px rgba(14,42,71,.18);padding:6px;display:none;z-index:50;min-width:200px}
+  .export-menu.show{display:block}
+  .export-menu button{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 12px;
+    border-radius:8px;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit}
+  .export-menu button:hover{background:var(--orange-soft);color:var(--orange)}
+
+  /* cards / sections */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .card .head{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .card .head .tag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:3px 9px;border-radius:6px}
+  .tag.am{background:var(--orange-soft);color:var(--orange)}
+  .tag.pm{background:#e9eef5;color:var(--navy)}
+  .card .head h2{margin:0;font-size:15.5px;font-weight:700;color:var(--navy)}
+  .card .head .purpose{font-size:11.5px;color:var(--muted);margin-left:auto;max-width:300px;text-align:right}
+  .card .body{padding:16px 18px}
+  .field{margin-bottom:14px}
+  .field:last-child{margin-bottom:0}
+  .field label{display:block;font-size:11.5px;font-weight:700;color:var(--navy);
+    text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+  .field .hint{font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0;font-size:11px}
+  textarea,input[type=text],input[type=date],select{
+    width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;
+    font-family:inherit;font-size:13.5px;color:var(--ink);background:#fff;resize:vertical}
+  textarea:focus,input:focus,select:focus{outline:none;border-color:var(--orange);
+    box-shadow:0 0 0 3px var(--orange-soft)}
+  textarea{min-height:74px;line-height:1.5}
+
+  /* rich text toolbar */
+  .rt-toolbar{display:flex;gap:3px;border:1px solid var(--line);border-bottom:0;
+    border-radius:9px 9px 0 0;padding:5px 7px;background:#fafbfd;flex-wrap:wrap}
+  .rt-toolbar button{border:0;background:none;width:30px;height:28px;border-radius:6px;
+    cursor:pointer;font-size:13px;color:var(--navy);display:grid;place-items:center}
+  .rt-toolbar button:hover{background:#eef2f7}
+  .rt-toolbar .sep{width:1px;background:var(--line);margin:3px 2px}
+  .rt-editor{border:1px solid var(--line);border-radius:0 0 9px 9px;min-height:120px;
+    padding:11px 13px;font-size:13.5px;line-height:1.55;background:#fff;overflow-y:auto;max-height:300px}
+  .rt-editor:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px var(--orange-soft)}
+  .rt-editor ul,.rt-editor ol{margin:6px 0 6px 22px;padding:0}
+  .rt-editor:empty:before{content:attr(data-ph);color:#aab4c0}
+
+  .btn{border:0;border-radius:9px;padding:9px 16px;font-size:13.5px;font-weight:600;
+    cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-family:inherit}
+  .btn.primary{background:var(--orange);color:#fff}
+  .btn.primary:hover{background:#dd5f12}
+  .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--navy)}
+  .btn.ghost:hover{background:#f3f6fa}
+  .btn.navy{background:var(--navy);color:#fff}
+  .btn.navy:hover{background:var(--navy-2)}
+  .btn.sm{padding:6px 11px;font-size:12.5px}
+  .save-row{display:flex;justify-content:flex-end;gap:10px;margin-top:6px}
+
+  /* follow-up tracker */
+  .toolbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .toolbar h2{margin:0;font-size:18px;color:var(--navy);font-weight:700}
+  .toolbar .spacer{flex:1}
+  .search{position:relative}
+  .search input{padding-left:32px;min-width:230px}
+  .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  .filters{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:5px 12px;
+    font-size:12.5px;font-weight:600;cursor:pointer;color:var(--muted)}
+  .chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;
+    box-shadow:var(--shadow);border:1px solid var(--line)}
+  thead th{background:var(--navy);color:#fff;text-align:left;font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.6px;padding:11px 12px;white-space:nowrap}
+  tbody td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;font-size:13px}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr:hover{background:#f8fafc}
+  tbody tr.done{background:var(--green-soft)}
+  tbody tr.done:hover{background:#ddf0e5}
+  .cat-badge{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap}
+  .notes-cell{max-width:280px}
+  .notes-cell ul,.notes-cell ol{margin:3px 0 3px 18px;padding:0}
+  .row-actions{display:flex;gap:5px;white-space:nowrap}
+  .icon-btn{border:0;background:none;cursor:pointer;width:30px;height:30px;border-radius:7px;
+    display:grid;place-items:center;color:var(--muted)}
+  .icon-btn:hover{background:#eef2f7;color:var(--navy)}
+  .icon-btn.del:hover{background:#fde8e8;color:#d1453b}
+  .check{width:22px;height:22px;border:2px solid var(--line);border-radius:6px;cursor:pointer;
+    display:grid;place-items:center;background:#fff}
+  .check.on{background:var(--green);border-color:var(--green);color:#fff}
+  .overdue{color:#d1453b;font-weight:700}
+  .due-soon{color:var(--orange);font-weight:700}
+  .empty{text-align:center;padding:46px 20px;color:var(--muted)}
+  .empty svg{opacity:.5;margin-bottom:10px}
+
+  /* history */
+  .hist-controls{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+  .hist-entry{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
+  .hist-entry .he-head{padding:12px 18px;background:#fafbfd;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:12px;cursor:pointer}
+  .hist-entry .he-head .d{font-weight:700;color:var(--navy);font-size:14px}
+  .hist-entry .he-head .meta{font-size:11.5px;color:var(--muted);display:flex;gap:14px}
+  .hist-entry .he-head .chev{margin-left:auto;color:var(--muted);transition:transform .2s}
+  .hist-entry.open .chev{transform:rotate(90deg)}
+  .hist-entry .he-body{display:none;padding:16px 18px}
+  .hist-entry.open .he-body{display:block}
+  .he-section{margin-bottom:14px}
+  .he-section h4{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--orange);font-weight:700}
+  .he-section .content{font-size:13px;color:var(--ink);background:#fafbfd;border:1px solid var(--line);
+    border-radius:9px;padding:10px 12px;min-height:20px}
+  .he-section .content:empty:before{content:"—";color:#bbb}
+  .he-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(14,42,71,.42);display:none;
+    align-items:flex-start;justify-content:center;z-index:60;padding:40px 16px;overflow-y:auto}
+  .overlay.show{display:flex}
+  .modal{background:#fff;border-radius:16px;width:100%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .modal .m-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center}
+  .modal .m-head h3{margin:0;font-size:16px;color:var(--navy)}
+  .modal .m-head .x{margin-left:auto;border:0;background:none;font-size:22px;color:var(--muted);cursor:pointer;line-height:1}
+  .modal .m-body{padding:20px}
+  .modal .m-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .cat-add{display:flex;gap:8px;margin-top:6px}
+  .cat-add input{flex:1}
+
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);
+    background:var(--navy);color:#fff;padding:12px 20px;border-radius:10px;font-weight:600;
+    box-shadow:0 8px 30px rgba(0,0,0,.3);z-index:80;opacity:0;transition:all .3s;font-size:13.5px}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+  .toast.show .ck{color:var(--orange)}
+
+  .stat-row{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+  .stat{flex:1;min-width:120px;background:#fff;border:1px solid var(--line);border-radius:12px;
+    padding:13px 16px;box-shadow:var(--shadow)}
+  .stat .n{font-size:26px;font-weight:800;color:var(--navy);line-height:1}
+  .stat .l{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:600;margin-top:4px}
+  .stat.warn .n{color:var(--orange)}
+  .stat.bad .n{color:#d1453b}
+
+  @media(max-width:860px){
+    .grid2,.he-cols{grid-template-columns:1fr}
+    #laneCards{grid-template-columns:1fr}
+    .card .head .purpose{display:none}
+    .nav{overflow-x:auto}
+    table{display:block;overflow-x:auto;white-space:nowrap}
+  }
+</style>
+</head>
+<body>
+<header class="app">
+  <div class="brand">
+    <div class="mark">E</div>
+    <div>
+      <h1>Expedited Daily Brief &amp; Debrief</h1>
+      <div class="sub">Operating Rhythm · Hirschbach</div>
+    </div>
+  </div>
+  <div class="datebox">
+    <label for="opDate">Operating day</label>
+    <input type="date" id="opDate">
+  </div>
+</header>
+
+<nav class="nav">
+  <button data-view="today" class="active">📋 Today's Brief / Debrief</button>
+  <button data-view="followups">✅ Follow-ups <span class="pill" id="openPill">0</span></button>
+  <button data-view="archive">📦 Archive <span class="pill pill-muted" id="archivePill">0</span></button>
+  <button data-view="history">🗂️ History</button>
+  <button data-view="lanes">🛣️ Lanes &amp; Owners</button>
+</nav>
+
+<main>
+  <!-- ============ TODAY ============ -->
+  <section class="view active" id="view-today">
+    <div class="phase-toggle">
+      <button class="phase-btn active" data-phase="am"><span class="tag am">AM</span> Morning Brief</button>
+      <button class="phase-btn" data-phase="pm"><span class="tag pm">PM</span> Afternoon Debrief</button>
+    </div>
+    <p class="phase-purpose" id="phasePurpose">Drive same-day execution, surface issues early, and build daily accountability.</p>
+
+    <!-- network-wide card -->
+    <div class="card net-card">
+      <div class="head">
+        <span class="net-dot">◆</span>
+        <h2 id="netTitle">Network-wide notes</h2>
+        <span class="purpose" id="netHint">Items that span the whole network — not tied to one lane.</span>
+      </div>
+      <div class="body" id="netBody"><!-- injected --></div>
+    </div>
+
+    <h3 class="lane-section-title">By Lane</h3>
+    <div id="laneCards"><!-- injected --></div>
+
+    <div class="save-row">
+      <button class="btn ghost" id="importBriefBtn">📋 Import notes</button>
+      <button class="btn ghost" id="addFromBrief">＋ Add follow-up from this call</button>
+      <button class="btn navy" id="briefPdfBtn">🖨️ Export brief to PDF</button>
+      <button class="btn primary" id="saveDay">💾 Save day</button>
+    </div>
+  </section>
+
+  <!-- ============ FOLLOW-UPS ============ -->
+  <section class="view" id="view-followups">
+    <div class="stat-row">
+      <div class="stat"><div class="n" id="stTotal">0</div><div class="l">Open items</div></div>
+      <div class="stat bad"><div class="n" id="stOverdue">0</div><div class="l">Overdue</div></div>
+      <div class="stat warn"><div class="n" id="stSoon">0</div><div class="l">Due ≤ 3 days</div></div>
+      <div class="stat stat-link" id="goArchiveStat"><div class="n" id="stDone">0</div><div class="l">Completed ›</div></div>
+    </div>
+
+    <div class="toolbar">
+      <h2>Follow-up Tracker</h2>
+      <div class="spacer"></div>
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="fuSearch" placeholder="Search notes, owner…">
+      </div>
+      <div class="export-wrap">
+        <button class="btn navy" id="exportBtn">⬇ Export ▾</button>
+        <div class="export-menu" id="exportMenu">
+          <button data-fmt="csv">Export to CSV</button>
+          <button data-fmt="excel">Export to Excel</button>
+          <button data-fmt="csv-filtered">CSV — current view only</button>
+        </div>
+      </div>
+      <button class="btn ghost" id="emailFuBtn">✉️ Email action items</button>
+      <button class="btn primary" id="newFu">＋ New follow-up</button>
+    </div>
+
+    <div class="toolbar">
+      <div class="filters" id="catFilters"></div>
+      <div class="spacer"></div>
+      <span class="archive-hint">Completed items move to the <a href="#" id="goArchive">Archive</a></span>
+    </div>
+
+    <table>
+      <thead><tr>
+        <th style="width:34px"></th>
+        <th>Date Added</th>
+        <th>Category</th>
+        <th>Notes</th>
+        <th>Owner</th>
+        <th>Due Date</th>
+        <th>Completion Notes</th>
+        <th style="width:80px"></th>
+      </tr></thead>
+      <tbody id="fuBody"></tbody>
+    </table>
+    <div class="empty" id="fuEmpty" style="display:none">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      <div>No open follow-ups. Add one to start tracking.</div>
+    </div>
+  </section>
+
+  <!-- ============ ARCHIVE ============ -->
+  <section class="view" id="view-archive">
+    <div class="toolbar">
+      <h2>Archive <span class="muted-count" id="archiveCount"></span></h2>
+      <div class="spacer"></div>
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="arSearch" placeholder="Search completed…">
+      </div>
+      <div class="export-wrap">
+        <button class="btn navy" id="arExportBtn">⬇ Export ▾</button>
+        <div class="export-menu" id="arExportMenu">
+          <button data-fmt="csv">Export to CSV</button>
+          <button data-fmt="excel">Export to Excel</button>
+        </div>
+      </div>
+    </div>
+    <p class="lanes-note">Completed follow-ups live here. You can reopen one (sends it back to the active tracker) or delete it permanently.</p>
+    <table>
+      <thead><tr>
+        <th>Completed</th>
+        <th>Date Added</th>
+        <th>Category</th>
+        <th>Notes</th>
+        <th>Owner</th>
+        <th>Due Date</th>
+        <th>Completion Notes</th>
+        <th style="width:110px"></th>
+      </tr></thead>
+      <tbody id="arBody"></tbody>
+    </table>
+    <div class="empty" id="arEmpty" style="display:none">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
+      <div>No completed follow-ups yet. Check one off and it lands here.</div>
+    </div>
+  </section>
+
+  <!-- ============ HISTORY ============ -->
+  <section class="view" id="view-history">
+    <div class="toolbar">
+      <h2>History</h2>
+      <div class="spacer"></div>
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="histSearch" placeholder="Search across all days…">
+      </div>
+    </div>
+    <div id="histList"></div>
+    <div class="empty" id="histEmpty" style="display:none">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h18v18H3z"/><path d="M3 9h18M9 21V9"/></svg>
+      <div>No saved days yet. Fill in a brief and hit “Save day”.</div>
+    </div>
+  </section>
+
+  <!-- ============ MANAGE LANES ============ -->
+  <section class="view" id="view-lanes">
+    <div class="toolbar">
+      <h2>Manage Lanes</h2>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="resetLanes">↺ Reset to defaults</button>
+      <button class="btn primary" id="newLane">＋ Add lane</button>
+    </div>
+    <p class="lanes-note">These lanes drive the cards on the Brief / Debrief tab and the sections in History. Drag the handle to reorder. Editing or removing a lane never deletes notes already saved on past days.</p>
+    <table id="laneTable">
+      <thead><tr>
+        <th style="width:40px"></th>
+        <th style="width:90px">Cost Center</th>
+        <th>Lane</th>
+        <th style="width:180px">Owner</th>
+        <th style="width:100px"></th>
+      </tr></thead>
+      <tbody id="laneBody"></tbody>
+    </table>
+    <div class="empty" id="laneEmpty" style="display:none">
+      <div>No lanes yet. Add one to start building daily cards.</div>
+    </div>
+
+    <div class="toolbar" style="margin-top:30px">
+      <h2>Owners</h2>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="resetOwners">↺ Reset roster</button>
+    </div>
+    <p class="lanes-note">This roster feeds the owner picker on each lane card and the owner dropdown on follow-ups. Renaming an owner updates every lane and follow-up that uses the old name. Removing a name leaves existing assignments untouched — it just stops offering the name going forward.</p>
+    <div class="owner-add-row">
+      <input type="text" id="newOwnerName" placeholder="Add an owner (e.g. Casey Raick)…" list="ownerList">
+      <button class="btn primary" id="addOwnerBtn">＋ Add owner</button>
+    </div>
+    <table id="ownerTable">
+      <thead><tr>
+        <th>Owner</th>
+        <th style="width:240px">Assigned to</th>
+        <th style="width:100px"></th>
+      </tr></thead>
+      <tbody id="ownerBody"></tbody>
+    </table>
+    <div class="empty" id="ownerEmpty" style="display:none">
+      <div>No owners in the roster. Add one above.</div>
+    </div>
+  </section>
+</main>
+
+<!-- ============ LANE MODAL ============ -->
+<div class="overlay" id="laneOverlay">
+  <div class="modal">
+    <div class="m-head"><h3 id="laneModalTitle">Add Lane</h3><button class="x" id="laneClose">×</button></div>
+    <div class="m-body">
+      <input type="hidden" id="laneEditId">
+      <div class="two">
+        <div class="field">
+          <label>Cost Center <span class="hint">— number or short code</span></label>
+          <input type="text" id="laneCC" placeholder="e.g. 151">
+        </div>
+        <div class="field">
+          <label>Owner</label>
+          <input type="text" id="laneOwner" list="ownerList" placeholder="Assign an owner…">
+        </div>
+      </div>
+      <div class="field">
+        <label>Lane <span class="hint">— endpoints / description</span></label>
+        <input type="text" id="laneDesc" placeholder="e.g. Sapulpa, OK (Hub) ↔ Kansas City ↔ Denton, TX">
+      </div>
+      <p class="lane-arrow-help">Tip: use ↔ for round-trip lanes, → for one-way. <button type="button" class="link-btn" id="insertArrow">Insert ↔</button></p>
+    </div>
+    <div class="m-foot">
+      <button class="btn ghost" id="laneCancel">Cancel</button>
+      <button class="btn primary" id="laneSaveBtn">Save lane</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ IMPORT NOTES MODAL ============ -->
+<div class="overlay" id="importOverlay">
+  <div class="modal" style="max-width:680px">
+    <div class="m-head"><h3 id="importTitle">Import notes into Morning Brief</h3><button class="x" id="importClose">×</button></div>
+    <div class="m-body">
+      <p class="import-help">Paste your call notes below using these line markers. Each marker starts a new section; text under it (including multiple lines) belongs to that section until the next marker.</p>
+      <div class="import-legend">
+        <code>NET:</code> network-wide notes &nbsp;·&nbsp; <code>CC 151:</code> a lane (matched by cost-center number) &nbsp;·&nbsp; <code>OWNERS 151: Joe Adams, Sara Weltz</code> set today's owners for a lane
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label>Paste notes</label>
+        <textarea id="importText" style="min-height:200px;font-family:'Segoe UI',monospace" placeholder="NET: Customer holiday hours pending. Push freight early for Tue–Thu.&#10;CC 151: Everybody departed on time. Need 3 afternoon loads for the Denton round trip.&#10;OWNERS 151: Joe Adams&#10;CC 135: Running 6 of 8. Aurora staffing still short."></textarea>
+      </div>
+      <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px">
+        <input type="checkbox" id="importAppend"> Append to existing notes instead of replacing them
+      </label>
+      <div id="importPreview" class="import-preview" style="display:none"></div>
+    </div>
+    <div class="m-foot">
+      <button class="btn ghost" id="importCancel">Cancel</button>
+      <button class="btn navy" id="importPreviewBtn">Preview</button>
+      <button class="btn primary" id="importApply" disabled>Apply to brief</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="fuOverlay">
+  <div class="modal">
+    <div class="m-head"><h3 id="fuModalTitle">New Follow-up</h3><button class="x" id="fuClose">×</button></div>
+    <div class="m-body">
+      <input type="hidden" id="fuId">
+      <div class="two">
+        <div class="field">
+          <label>Date Added</label>
+          <input type="date" id="fuDate">
+        </div>
+        <div class="field">
+          <label>Due Date</label>
+          <input type="date" id="fuDue">
+        </div>
+      </div>
+      <div class="field">
+        <label>Category</label>
+        <select id="fuCat"></select>
+        <div class="cat-add">
+          <input type="text" id="fuNewCat" placeholder="Or type a new category…">
+          <button class="btn ghost sm" id="fuAddCat">Add</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Owner</label>
+        <input type="text" id="fuOwner" list="ownerList" placeholder="Assign an owner…">
+        <datalist id="ownerList"></datalist>
+      </div>
+      <div class="field">
+        <label>Notes <span class="hint">(rich text)</span></label>
+        <div class="rt" data-target="fuNotes" data-ph="What needs to happen and why…"></div>
+      </div>
+      <div class="field">
+        <label style="display:flex;align-items:center;gap:9px;cursor:pointer">
+          <span class="check" id="fuDoneCheck"></span> Completed
+        </label>
+      </div>
+      <div class="field" id="fuCompWrap" style="display:none">
+        <label>Completion Notes</label>
+        <div class="rt" data-target="fuCompNotes" data-ph="How was it resolved?"></div>
+      </div>
+    </div>
+    <div class="m-foot">
+      <button class="btn ghost" id="fuCancel">Cancel</button>
+      <button class="btn primary" id="fuSave">Save follow-up</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DEFAULT_OWNERS = ["Allen Allday","Amye Alvarez","Angela Lazarin","Bonnie Brooks","Brandon Reyna","Brian Stewart","Bryan Ryder","Casey Raick","Cecil Watts","Chelsie Bebber","David Klement","Joe Adams","John Hessler","Jordan Fream","Josh Catton","Krista Vokey","Kristi Noland","Lacey Curry","Lyndi Curry","Mike Howell","Nate Kratz","Regina Henson","Rober Williams","Samsung Rivera","Sara Weltz","Sean Moser","Tyler Romine"];
+const DEFAULT_CATS = ["Maintenance","Driver","Equipment","Planning","Loads"];
+
+/* Lanes from the Daily Tracker. Each gets its own notes section per phase. */
+const DEFAULT_LANES = [
+  {id:"cc152", cc:"152", lane:"Indianapolis, IN ↔ Kansas City, KS", owner:"Bryan Ryder"},
+  {id:"cc148", cc:"148", lane:"Indianapolis, IN ↔ Mount Airy, NC", owner:"Allen Allday"},
+  {id:"cc154", cc:"154", lane:"Indianapolis, IN ↔ Carlisle, PA", owner:"Lacey Curry"},
+  {id:"cc149", cc:"149", lane:"Indianapolis, IN ↔ Bedford, PA", owner:"Lacey Curry"},
+  {id:"cc151", cc:"151", lane:"Sapulpa, OK (Hub) ↔ Kansas City ↔ Denton, TX", owner:"Sara Weltz"},
+  {id:"cc147", cc:"147", lane:"Aledo, TX ↔ San Bernardino, CA", owner:"Regina Henson"},
+  {id:"cc135", cc:"135", lane:"AZ ↔ TX (Aurora)", owner:"Sean Moser"},
+];
+/* Prompts shown inside each lane card, per phase */
+const PHASE_PROMPTS = {
+  am:"Overnight review · today's plan · key focus · support needed for this lane…",
+  pm:"What went well · what to improve · commitments for this lane…"
+};
+const CAT_COLORS = {
+  Maintenance:["#fde8e8","#c0392b"], Driver:["#e8f1fd","#1d5fb0"],
+  Equipment:["#fff1e8","#d2660f"], Planning:["#efe8fd","#6b40c0"],
+  Loads:["#e8f6ee","#1f7d47"], _default:["#eef2f7","#445566"]
+};
+
+/* ---------- storage ---------- */
+const K_DAYS="exp_brief_days", K_FU="exp_followups", K_CATS="exp_cats", K_LANES="exp_lanes", K_OWNERS="exp_owners";
+let store = {
+  days: {},        // {dateISO: {am:{net,lanes:{}}, pm:{...}, savedAt}}
+  fus: [],         // follow-up items
+  cats: [...DEFAULT_CATS],
+  lanes: JSON.parse(JSON.stringify(DEFAULT_LANES)),
+  owners: [...DEFAULT_OWNERS]
+};
+async function load(){
+  try{
+    const d = await window.storage.get(K_DAYS, true); if(d) store.days = JSON.parse(d.value);
+  }catch(e){}
+  try{
+    const f = await window.storage.get(K_FU, true); if(f) store.fus = JSON.parse(f.value);
+  }catch(e){}
+  try{
+    const c = await window.storage.get(K_CATS, true); if(c) store.cats = JSON.parse(c.value);
+  }catch(e){}
+  try{
+    const l = await window.storage.get(K_LANES, true); if(l){ const arr=JSON.parse(l.value); if(Array.isArray(arr)&&arr.length) store.lanes=arr; }
+  }catch(e){}
+  try{
+    const o = await window.storage.get(K_OWNERS, true); if(o){ const arr=JSON.parse(o.value); if(Array.isArray(arr)) store.owners=arr; }
+  }catch(e){}
+  seedDebrief0624();
+  seedBrief0625();
+  seedDebrief0625();
+  seedBrief0626();
+  seedFollowups();
+}
+
+/* One-time seed: action items captured from the 6/26 brief. Each is added only
+   once (tracked by a stable id), so it won't duplicate or resurrect if deleted
+   after the flag is set. */
+function seedFollowups(){
+  const FLAG="exp_seed_fu_0626_v1";
+  let already=false;
+  try{ already = !!localStorage.getItem(FLAG); }catch(e){}
+  if(already) return;
+  const seedItems=[
+    { id:"seed_fu_recruiting_0626", date:"2026-06-26", due:"2026-06-26", cat:"Planning",
+      owner:"Kristi Noland", notes:"<p>Add recruiting to this call daily.</p>", done:false, compNotes:"" },
+    { id:"seed_fu_ro_320832_0626", date:"2026-06-26", due:"2026-06-26", cat:"Maintenance",
+      owner:"Lyndi Curry", notes:"<p>Research truck 320832 — has no RO created but is in S status.</p>", done:false, compNotes:"" }
+  ];
+  let added=0;
+  seedItems.forEach(it=>{
+    if(!store.fus.some(f=>f.id===it.id)){ store.fus.push(it); added++; }
+  });
+  try{ localStorage.setItem(FLAG,"1"); }catch(e){}
+  if(added) saveFus();
+}
+
+/* One-time seed: 6/24 afternoon debrief notes from the operational debrief call.
+   Only applied if that day's PM debrief is still empty, so it never overwrites edits. */
+function seedDebrief0624(){
+  const iso="2026-06-24";
+  const FORCE_KEY="exp_force_restore_0624_pm_v1";
+  const existing=store.days[iso];
+  const pmHasContent = existing && existing.pm &&
+    (stripHtml(existing.pm.net||"").trim() || Object.values(existing.pm.lanes||{}).some(v=>stripHtml(v).trim()));
+  // One-time forced restore: if this device hasn't run the restore yet, refill 6/24 PM
+  // even if a (possibly emptied) entry exists. Runs once, then behaves normally.
+  let forced=false;
+  try{ forced = !localStorage.getItem(FORCE_KEY); }catch(e){ forced=false; }
+  if(pmHasContent && !forced) return; // respect existing edits once restore has run
+
+  const pmLanes={
+    cc135:`<p><b>What went well:</b> Started the day with 8 loads; closed at 5 departing.</p>
+<p><b>What can be improved / issues:</b></p>
+<ul>
+<li>One load given back to OTR — overweight for Aurora (their trucks run heavier due to camera/autonomy equipment).</li>
+<li>Two trailers failed on cracked cross members; one was a previously repaired weld that re-cracked. Cannot run until empty, then repair.</li>
+<li>Texas-side staffing shortage at Aurora — only one depart possible out of Texas tomorrow. Recurring over recent weeks; communication is improving.</li>
+</ul>
+<p><b>Commitments / forward:</b> Ongoing conversations with Aurora on the shortage. Expected to persist through end of August until new trucks arrive and full autonomy runs. Aurora pulling from other carriers to cover. Anticipating 6 tomorrow (one CA→TX load handed to California expedited team; still solving a Colton→Arizona capacity gap).</p>`,
+
+    cc152:`<p><b>What went well:</b> Good day — Kansas City all green except one driver red. Plan was to fill out Thursday &amp; Friday on short notice out of KC, and that was accomplished (5 loads secured on the KC side).</p>
+<p><b>What can be improved:</b> Indy / Kansas City yard is very full — driver feedback about struggling to find spots to park trucks/trailers.</p>
+<p><b>Note:</b> One turn with Dijour One hit a pole in Indy, causing tractor damage. Good catch by Maintenance — reported before it became a failure or missed depart.</p>
+<p><b>Support (from TJ):</b> Talked with Fred today; working to get buyers in to pull trailers out ASAP, especially with more trailers coming over the next several weeks. Ask drivers to park tight against each other to shrink wasted space.</p>`,
+
+    cc148:`<p><b>What went well:</b> Loads coming in and moving out strong. Working to fill Saturday PM, Sunday, and into next week.</p>
+<p><b>What can be improved:</b> Using two OTR fill-ins; slim pickings on expedited drivers due to hours-of-service limits.</p>
+<p><b>Open question:</b> Need customer holiday hours to get ahead of the curve. (Ashley: customers don't begin sending until tomorrow/Friday; will distribute as soon as available — logged as a national follow-up.)</p>`,
+
+    cc149:`<p><b>What went well:</b> Good day — full night departs tonight and full morning departs tomorrow, which hasn't happened in a long time. A win.</p>
+<p><b>What can be improved:</b> Using one OTR fill-in. Same Indy-side opening tomorrow as today; today's expedited fill-ins will have to reset, so likely unavailable tomorrow. May need OTR fill-ins or send drivers to pick up loads without departing.</p>
+<p><b>Detail:</b> 4 total openings — 2 on the 5 PM Indy depart and 2 on the 6 PM Indy depart (4 PA drivers 5–6, zero Indy drivers). Ride-along is full on the PA side; moving it to 4 PM since the 5 PM depart may not happen.</p>`,
+
+    cc154:`<p><b>Covered with CC 149 (Lacey).</b> See CC 149 notes — 149 ↔ 154 discussed together: full night/morning departs, one OTR fill-in, recurring Indy-side openings and ride-along rescheduled to 4 PM.</p>`,
+
+    cc151:`<p><b>What can be improved / issues (Joe):</b></p>
+<ul>
+<li>4 AM no-depart: driver pulled over by DOT ~10 min out with all trailer lights out. Pre-trip showed them working. Ran him out of hours (down to ~8h40m), so load moved to 2 PM shift.</li>
+<li>At 2 PM, same trailer again had no lights — root cause was a bad pigtail (trailer 32043), fixed and now on the road; will still make on-time delivery to Kansas.</li>
+<li>Return load due 7:30 AM in Coppell, TX has no truck (us or OTR) — working a reschedule this evening.</li>
+<li>4 PM shift ran an empty move — no KC load to bring down.</li>
+<li>Tomorrow AM likely no-depart: one load short in Sapulpa; return load won't arrive until ~3 PM, too late to turn.</li>
+</ul>
+<p><b>Freight opportunity (John):</b> Working with Donna; Sarah Weltz noticed area 4/5 freight marked live load/live unload with a single delivery appointment is actually a window — we can drop. Exploring more drop-capable customers to widen the window, shuffle the deck, and avoid counting ourselves late.</p>
+<p><b>Lane discipline (Lyndi / leadership):</b> Keeping drivers as Oklahoma drivers (either direction) rather than splitting KC vs Dallas — a hard split would lock a driver into one run. Truck delay on this lane is also a load delay (KC→Sapulpa return is the Texas load for the PM driver); no 2-hour fluff like other lanes. Treat it as a sailing schedule — never leaves late. Pro: truck stays hooked to the load, one less drop-and-hook than other lanes. Seen as the model for how all lanes should run.</p>`,
+
+    cc147:`<p><b>What went well:</b> All customer loads on time. Found temporary coverage (≈3 weeks) for a Tucson driver on leave of absence using expedited drivers — keeps the miles at no additional cost. Tyler knocked out analytics today (down to three items).</p>
+<p><b>What can be improved / watch:</b> One spot load being rescheduled — departed on time per our schedule; root cause not yet dug into, answers to come. Zeti/team loads doing inventory on the 29th, so loads scheduled to pick up the 29th pushed out — will look for replacement freight.</p>
+<p><b>Equipment:</b> Two trucks still in the shop in Denton.</p>
+<p><b>Commitment:</b> Continue staying on top of freight and running full.</p>`
+  };
+
+  const pmNet=`<p><b>Source:</b> 06/24 Operational Debrief — Load Status &amp; Lane Performance call.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Holiday hours:</b> Customer holiday hours still pending; most don't send until tomorrow/Friday. Ashley/teams to distribute ASAP — national follow-up to revisit tomorrow.</li>
+<li><b>Sailing-schedule discipline:</b> CC 151 (Sapulpa) held up as the model — fixed schedule, never leaves late, one less drop-and-hook. Leadership wants this discipline spread to all lanes.</li>
+<li><b>HOS-constrained fill-ins:</b> Multiple lanes leaning on OTR fill-ins because expedited drivers are tight on hours of service.</li>
+<li><b>Maintenance catch:</b> Shoutout to Maintenance for catching the Dijour One tractor damage before a failure/missed depart.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].pm) store.days[iso].pm={net:"",lanes:{}};
+  store.days[iso].pm.net=pmNet;
+  store.days[iso].pm.lanes=pmLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  try{ localStorage.setItem(FORCE_KEY,"1"); }catch(e){}
+  saveDays();
+}
+
+/* One-time seed: 6/25 morning brief from the Truck Operations Performance call.
+   Only applied if that day's AM brief is still empty, so it never overwrites edits. */
+function seedBrief0625(){
+  const iso="2026-06-25";
+  const existing=store.days[iso];
+  const amHasContent = existing && existing.am &&
+    (stripHtml(existing.am.net||"").trim() || Object.values(existing.am.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(amHasContent) return; // respect anything already entered
+
+  const amLanes={
+    cc135:`<p><b>Today's plan:</b> Running 6 of 8 today.</p>
+<p><b>Gaps / issues:</b></p>
+<ul>
+<li>One miss is the ongoing Aurora staffing issue (Texas side) we've been working the last couple of weeks.</li>
+<li>One load given to the expedited California lane so they didn't run empty last night — it was our load for this morning, and we didn't get a replacement into the yard in time.</li>
+</ul>
+<p><b>Freight:</b> Looking good through the weekend.</p>`,
+
+    cc152:`<p><b>Overnight:</b> Indy ↔ Kansas City had a good night — no surprises, everybody loaded.</p>
+<p><b>Today's plan:</b> A couple open shifts on the AM side (not running full there), but everyone is loaded. PM looking good to run full 8 of 8, everybody loaded. Back-to-back days of full PM 8/8 — encouraging; want to keep it going. Plan to stay slightly overbooked for the weekend so surprises don't leave drivers without freight.</p>
+<p><b>Win:</b> A former driver (the Friday-to-Monday guy who wanted weekends off) wants to come back for one of the open Indy shifts. Friday through Monday looks good.</p>`,
+
+    cc148:`<p><b>Rough start — putting out fires all morning.</b></p>
+<p><b>Issues:</b></p>
+<ul>
+<li>9 PM shift: driver got into a truck that "wouldn't roll." Shop said the wheels were just rested and needed to get rolling. They tried to move him to another truck; driver went home. Sent him a message, hasn't read it — still trying to reach him.</li>
+<li>4 AM shift: driver called out — daughter sick, no daycare/coverage, couldn't run.</li>
+</ul>
+<p><b>Coverage:</b> Running one truck on OTR help, bringing it all the way up from North Carolina into Indy to cover.</p>
+<p><b>Freight:</b> Plenty of loads into Friday; Saturday needs to start working; building up Sunday.</p>`,
+
+    cc149:`<p><b>Overnight:</b> Ran all full departures last night for the PMs.</p>
+<p><b>This morning (Bedford side) — things crumbling a little:</b></p>
+<ul>
+<li>Three loads didn't make it to the yard in time. One OTR driver's break was supposed to be up at 5 and he's still not rolling — was going to have the load there last night but shut down feeling unwell.</li>
+<li>Result: one no-depart and two empty moves.</li>
+<li>Silver lining: using two of the drivers to pick up/deliver loads and knock out some drug tests.</li>
+</ul>`,
+
+    cc154:`<p><b>Carlisle Lane:</b> Full AM departs. Added an extra AM depart to counter this afternoon's shortage (some folks wanted an extra day but were 5 AM, so built an extra AM depart). Found one expedited fill-in for tonight, so won't be down as many as feared.</p>
+<p><b>This afternoon:</b> Only 5 departs — down 3.</p>
+<p><b>Issue to track — drug testing:</b> Carlisle clinic is open only 8–3 (must arrive by 3 to avoid being turned away). Nighttime drivers start ~5 PM and don't get back until ~4 AM, so randoms are very hard to fit. Nothing within 40 miles open past 5. The lane's tight turn means the usual "test in motion while running the lane" workaround isn't an option here.</p>`,
+
+    cc151:`<p><b>Overnight / this morning:</b> Everybody departed this morning — loads for everyone, all left on time. Getting back into the right rhythm with the morning group.</p>
+<p><b>Need — three afternoon loads:</b></p>
+<ul>
+<li>One load out of Denton going back to Sapulpa.</li>
+<li>One load out of Sapulpa down to Texas.</li>
+<li>One load from Texas back up. (i.e. one full round trip — needs a load already in Sapulpa to take down to Denton and load back from Denton up.)</li>
+</ul>
+<p><b>Outlook:</b> Can fill the one load and be back for the 2 PM; a couple loads running ahead may depart today instead of tomorrow afternoon. Getting the round-trip load down is the tougher piece. Brian to circle back with Ashley after the call to help fill this afternoon.</p>`,
+
+    cc147:`<p><b>Overnight:</b> California ↔ Texas everything ran well last night.</p>
+<p><b>This morning:</b> Call-out on the 11 AM shift out of Tucson. Messaged the four available expedited drivers; Tyler found a company driver in the shop in Tucson (in a hotel) we're reaching out to about running one of our trucks. Also have an option from the Arizona planner — hopeful to get something in place and run on time.</p>
+<p><b>Freight:</b> Pulled in loads for the 29th (was needing them yesterday) by moving things around; still looking for one load for the 29th.</p>
+<p><b>Equipment (yellow):</b> Trucks still in the Denton shop.</p>
+<p><b>Lytx:</b> Tyler cleaned up the Lytx items — about two left; one needs Jordan to look at (no destruction there), the other just popped up.</p>`
+  };
+
+  const amNet=`<p><b>Source:</b> 06/25 Morning Brief — Truck Operations Performance, Route Coverage, Driver Availability &amp; Lytx Follow-ups.</p>
+<p><b>Fleet snapshot (Lyndi):</b></p>
+<ul>
+<li>92 trucks yesterday at 718 miles — lower than anticipated (expected ~800).</li>
+<li>13 open shifts, 10 of them out of Indy — the pinch-point opportunity. ~9 pending the Texas/California update.</li>
+<li>Down trucks: discrepancy being reconciled (Ben showed 4, board showed 10) — 2 of the 10 are being picked up from the NC shop and will move to D status shortly.</li>
+</ul>
+<p><b>Lytx:</b> Positive — several top-five drivers have dropped off the list; coaching is working (Rosalie no longer on there). 15 Lytx events due, to be knocked out.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Driver reliability:</b> Yesterday's mileage fell well short (~718 vs ~800). Leadership wants coaching so drivers understand running the shift is critical — the daycare call-out flagged as not acceptable.</li>
+<li><b>Loads-to-yard:</b> Richard/leadership want Planning to review the three loads that didn't reach the yard in time and adjust.</li>
+<li><b>Holiday week:</b> Real concern about Tue/Wed/Thu going into the holiday given lane structure and RDOs — be aggressive securing freight early. Lean on Travis, Brian &amp; Ashley's teams.</li>
+<li><b>Holiday hours:</b> Brian circling back with Ashley; customer holiday hours expected today/tomorrow — update this afternoon.</li>
+<li><b>DEJOR One incident:</b> Yesterday's tractor-damage incident — driver is denying it; no video, only people who saw it. To be handled offline.</li>
+<li><b>Morning truck count:</b> Ben and Lyndi agreed the correct figure is 6 down trucks.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
+  store.days[iso].am.net=amNet;
+  store.days[iso].am.lanes=amLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  saveDays();
+}
+
+/* One-time seed: 6/25 afternoon debrief from the Daily Operations, Trailer
+   Management & AS/400 Planning Updates call. Applied only if 6/25 PM is empty. */
+function seedDebrief0625(){
+  const iso="2026-06-25";
+  const existing=store.days[iso];
+  const pmHasContent = existing && existing.pm &&
+    (stripHtml(existing.pm.net||"").trim() || Object.values(existing.pm.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(pmHasContent) return;
+
+  const pmLanes={
+    cc135:`<p><b>What went well (Sean):</b> Set to run 6 of 8 — no change since this morning. Got loads to the yard early, which went well.</p>
+<p><b>What can be improved:</b> Inspection turnaround. Two trailers for the evening depart are at the yard waiting on Aurora to return inspection info; trailers arrive early but inspections wait until afternoon, and if something needs fixing it limits how we can move things around.</p>
+<p><b>Status:</b> Loads yellow (6 of 8). Equipment yellow — still pending inspections. Other yellow — staffing limited an additional depart.</p>
+<p><b>Commitment:</b> Keep working with Aurora to speed up the inspection piece.</p>`,
+
+    cc152:`<p><b>What went well (Josh):</b> Good Indy → Kansas City afternoon — 8 of 8 loaded. (Morning was 6 of 8 with open shifts.)</p>
+<p><b>Save:</b> ~45 min ago a driver at the shipper (Smithfield Foods, Lincoln NE) for an early-AM depart was pulled — load wasn't ready, short trailers there. Caught it; a driver checked in at Junction City doesn't have hours to reach the yard tonight but can load on time, so the local will go save that load and bring it to the yard — AM depart saved.</p>
+<p><b>What can be improved:</b> Trailer situation in Nebraska (ND area very tight on capacity) — possibly one empty move in the morning, still TBD. Drivers box yellow (open shifts); load box red (capacity).</p>`,
+
+    cc148:`<p><b>Allen — 148 Indy → North Carolina:</b> One OTR fill-in for tonight; AM all running full shift with expedited drivers. Planning looks good heading into the weekend.</p>
+<p><b>Note:</b> Two no-departs this morning on the Indy side — one was the driver whose daughter got sick, the other an OTR fill-in covering. Still dispatching the PM shift.</p>`,
+
+    cc149:`<p><b>Lacey — Bedford:</b> 3 of 4 PMs departing tonight; 6 of 8 for the day. The two empty moves this morning still departed with one load. Got three randoms completed (two more scheduled tomorrow). Short one depart in the morning due to an open shift.</p>`,
+
+    cc154:`<p><b>Lacey — Carlisle:</b> Two of four departed the first night; with the extra one added this morning it ended up 7 of 8 (down two, offset by the extra).</p>
+<p><b>Accident:</b> A driver pulling out of the scale hit another trailer — our load has significant trailer damage and must be transloaded. Were waiting on permission to cut the seal (Nate working it); being towed now. Customer is Smithfield; main concern is the swap partner's Walmart load, which Lacey got switched to run on the other lane. More updates to follow.</p>`,
+
+    cc151:`<p><b>Joe — this morning:</b> 3 parts to Texas and 2 to Kansas (every lane currently filled). This morning and afternoon will have three empty moves: one is the first run of a lane (must go up empty to start the cycle), the other two are short freight.</p>
+<p><b>Hiring/build-out:</b> New hire doing a ride-along today; three more hopefully get drug screens in the morning to ride and start Sat/Sun. An OTR driver is transferring in (turning in his truck tomorrow), moving from 101 to 151, starting Saturday on a 2 AM shift. Target remains 16 departs; 5 pending hires in orientation/starting next week — if all five show up clean, the lane will be full.</p>`,
+
+    cc147:`<p><b>Regina — California/Texas:</b> Full on the parts. Tucson call-out covered with an expedited driver — went well. Lytx caught up (one left for Jordan to remove). All loads running on time for on-time delivery; one driver delayed in Tucson for a tire repair is fixed and rolling, will make up time Las Cruces → Tooele tonight.</p>
+<p><b>What can be improved:</b> Still juggling next-week freight — a forever-moving target as shippers change things; spent a lot of time on it today.</p>
+<p><b>Commitment:</b> Get safety calls back on track — PSCs have slipped while spending more time on freight than drivers; commit to reaching at least five drivers a day for check-ins.</p>`
+  };
+
+  const pmNet=`<p><b>Source:</b> 06/25 Afternoon Debrief — Daily Operations, Trailer Management &amp; AS/400 Planning Updates.</p>
+<p><b>Process change (Kristi):</b> Added a <b>planned parts</b> field in the morning and an <b>actual parts</b> field on the debrief, so leaders not in the spreadsheet daily (Ashley, Travis) can see planned-vs-actual departs per lane at a glance. Fill these in when updating the brief/debrief.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Trailers at Sapulpa (decon lot):</b> Four usable trailers have been sitting on the Sapulpa decon lot — saved for expedited but forgotten; they show on the stale-trailer report. Verify tires before use (one had a flat, other three fine). Shop was told Monday to move them down; still on the lot. Action: move them down and have the group learn the new trailer report (built with the trailer A3 team / Christina) — it's been spot-on; Kristi to share the link and walk the group through access at tomorrow's meeting.</li>
+<li><b>Laredo trailers:</b> ~40 trailers in Laredo (Driscoll's) — not being aggressively pulled since they're needed back there in ~2 months; priority is moving steel trailers from other markets first.</li>
+<li><b>AS/400 POA vs OM:</b> Most lanes use the OM field (the standard process) rather than the POA field for first-mile freight needing OTR planner help (CC 147 N/A). Kristi gathering current practice as the process evolves.</li>
+<li><b>Safety / Lytx:</b> Nate — focus on miles with expedited drivers and on safety; the accident driver fully owned his mistake and discussed what to do differently (a positive in a tough moment).</li>
+<li><b>Customer Service (Ashley):</b> Nobody's done anything wrong — learning each lane's process to make load identification easier and more automated; will call Regina and Lacey tomorrow with individual questions.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].pm) store.days[iso].pm={net:"",lanes:{}};
+  store.days[iso].pm.net=pmNet;
+  store.days[iso].pm.lanes=pmLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  saveDays();
+}
+
+/* One-time seed: 6/26 morning brief from the Weekly Meeting — Daily Operations,
+   Performance Review & Freight Planning call. Applied only if 6/26 AM is empty. */
+function seedBrief0626(){
+  const iso="2026-06-26";
+  const existing=store.days[iso];
+  const amHasContent = existing && existing.am &&
+    (stripHtml(existing.am.net||"").trim() || Object.values(existing.am.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(amHasContent) return;
+
+  const amLanes={
+    cc135:`<p><b>Rough morning (Sean).</b></p>
+<ul>
+<li>Two AM-depart loads out of Arizona did not make the yard. Planning never planned them last night — should have pulled other freight off and prioritized; not caught until late. Travis's team has addressed it. Late customer: Coke.</li>
+<li>Texas-side trailer with broken cross members can't run — moving things around; planning 2–3 departures on Texas/Arizona depending on whether another yard trailer passes inspection.</li>
+<li>El Paso ABS-light load: tech fixed it at 3 AM, but it failed again at the morning inspection — that load will be late. Two other loads from that location can still move. Another load cancelled; still working today's freight.</li>
+</ul>
+<p><b>Cross-member note:</b> ~30% of trailers dropped have a cross-member situation. Aurora shuts these down because they run an enhanced pre-trip to skip the scale (specific to Aurora).</p>`,
+
+    cc152:`<p><b>Rough night (Josh) — 6 of 8 departures.</b> The 1 and 2 didn't run due to an open shift.</p>
+<ul>
+<li>Two of the six segments ran empty: one was Indianapolis capacity planning struggling to get a Kroger load loaded (T-called for us); the other was Pepsi on the Indy→KC lane for Edgerton, supposed to be preloaded and wasn't. Trip numbers are in the notes.</li>
+<li><b>For Ashley/Brian:</b> local driver reports ~20–25 dropped, loaded trailers sitting at the Edgerton (KS) final — possible trailer-storage/detention to look into; a lot of trailers we can't use.</li>
+</ul>
+<p><b>Worried about this afternoon:</b> ~9 loads won't make the yard (Smithfield, Tyson, Cargill) — delayed for product issues or no trailers in areas 4 and 5. Will get creative with Andrew. Heavy reliance on protein customers in 4/5; hoping to diversify with Hostess and others in KC. Has a driver going into Hostess for Edgerton; 3–4 set to preload by 10–11 PM tonight.</p>`,
+
+    cc148:`<p><b>Lacey (Speaker 7):</b> Indy ↔ North Carolina using one OTR fill-in; the rest expedited full. Full PM departs last night and full departs again today. Working to get everything planned properly and as far forward as possible.</p>`,
+
+    cc149:`<p><b>Bedford (Speaker 8):</b> Likely down one depart today through tonight due to open positions.</p>`,
+
+    cc154:`<p><b>Carlisle (Speaker 8):</b> Thought we were down three, but may have pieced together a sixth — so possibly 6 departs. Constraint: a random drug test needs completing and the driver has to come in three hours early, which makes him hard to run.</p>`,
+
+    cc151:`<p><b>Sarah — 4 departures this morning; lane should be fine.</b></p>
+<ul>
+<li>A couple late starts: one driver had to wait out a 10-hour HOS reset; another got bogged down at a scale.</li>
+<li>One truck was switched and the load moved this morning — notes left didn't explain why; still digging into the particulars.</li>
+<li>Freight booking looks decent; lots flagged to add. Goal today: work the sheet so loads are where they need to be.</li>
+</ul>
+<p><b>Tyson drop-window effort (Sarah + John):</b> Reached out to Tyson to get delivery windows on Kansas→Texas freight. Today we only drop at Sherman; if we could drop at Haltom City / North Richland Hills with a window opened to noon, it'd open more options out of areas 3 and 5 into Texas. North Richland allows only one drop at a time — asked them to mark those as EXP in the OM so OTR doesn't grab them. Was being looked into Mon/Tue; Sarah back today and following up.</p>`,
+
+    cc147:`<p><b>Regina &amp; Tyler — full departures yesterday.</b></p>
+<ul>
+<li>Some loads running a little behind: a fatality accident closed I-10 eastbound ~4 hours overnight; Davey rerouted drivers around it so they didn't get stuck, but there were late departs out of Las Cruces this morning. Still good for on-time delivery; parts all there.</li>
+<li>Plan today: keep looking for loads to plug in and stay full on the parts.</li>
+</ul>
+<p><b>What works on this lane (Tyler):</b> With two of them on a high-volume lane, Tyler handles the majority of issues and driver needs (truck swaps, etc.) while Regina is freed up to find solutions, shuffle loads, and plan — almost a dedicated planner to the lane. Keeps drivers moving; offered as a model worth noting (not necessarily one-size-fits-all).</p>`
+  };
+
+  const amNet=`<p><b>Source:</b> 06/26 Weekly Meeting — Daily Operations, Performance Review &amp; Freight Planning.</p>
+<p><b>Fleet snapshot (Lyndi):</b></p>
+<ul>
+<li>94 trucks yesterday; miles per truck down to 686 — not an awesome day, but explainable. A wrecked truck was removed from the list this morning.</li>
+<li>12 open shifts (working with Ben). ~10.5 opportunities; CC 147 was clean both nights so its lower miles trace to the midnight-snapshot dispatch/empty timing, not a miss.</li>
+<li>Down trucks: 2 matched with Ben, plus one more in F status with <b>no RO open</b> — dig into truck 3-2-8-3-2 and find out why there's no RO. Autonomous-to-parts: 6.</li>
+<li>Confidence the miles per truck recover once CC 151 (Oklahoma hub) runs full and its 9 trucks get drivers and go full-to-parts.</li>
+</ul>
+<p><b>Lytx (Lyndi):</b> 22 coachings, 1 overdue. Focus areas for Z-calls: following distance (#1), other distractions (cell phones, eating/drinking, looking away), inattentive, and seatbelt — the quick win (incl. Lacey's driver who wears it but not correctly). Progress on speeding violations.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Freight ownership / EXP marking:</b> Big discussion — vision is Customer Service + Sales fill the sheet and Planning owns getting freight to the yard on time (planned 5–6 days out), so EXP teams never hunt freight in planning screens and can focus on drivers. Today the sheet still requires operational adjustment. Clarify EXP vs EXPE: <i>EXP</i> = expedited intends to run it (entered by us); <i>EXP</i> (no E) = CSR/planner set aside for us; <i>EXPE</i> = acknowledged/held for expedited (via Freight Science). Richard/Ashley/Travis to set a line-in-the-sand date for CS &amp; Planning to complete the handoff.</li>
+<li><b>Performance pressure (Richard):</b> Operating ratio over 100 (lost money) vs. target high-70s/low-80s; every missed load, OTR fill, and open position weighs on it. 12 open positions; turnover far above the &lt;10% target. Drivers must come first; lanes must leave on time, every time. Recruiting should be on this call daily. Don't disregard leadership direction to freelance freight — it's eroding trust.</li>
+<li><b>Wins (Nate):</b> Strong week filling open shifts with expedited drivers — good setup heading into the weekend.</li>
+<li><b>Follow-up:</b> Kristi meeting with Travis's team and circling back with Ashley this afternoon on making freight easier to identify/mark; Darren &amp; Ashley also in conversation. Updates expected at the afternoon debrief.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
+  store.days[iso].am.net=amNet;
+  store.days[iso].am.lanes=amLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  saveDays();
+}
+async function saveDays(){ try{ await window.storage.set(K_DAYS, JSON.stringify(store.days), true); return true;}catch(e){ console.error("saveDays failed",e); return false;} }
+async function saveFus(){ try{ const r=await window.storage.set(K_FU, JSON.stringify(store.fus), true); return r!==null && r!==undefined;}catch(e){ console.error("saveFus failed",e); return false;} }
+async function saveCats(){ try{ await window.storage.set(K_CATS, JSON.stringify(store.cats), true); return true;}catch(e){ console.error("saveCats failed",e); return false;} }
+async function saveLanes(){ try{ await window.storage.set(K_LANES, JSON.stringify(store.lanes), true); return true;}catch(e){ console.error("saveLanes failed",e); return false;} }
+async function saveOwners(){ try{ await window.storage.set(K_OWNERS, JSON.stringify(store.owners), true); return true;}catch(e){ console.error("saveOwners failed",e); return false;} }
+
+/* ---------- helpers ---------- */
+const $ = s=>document.querySelector(s);
+const $$ = s=>document.querySelectorAll(s);
+function todayISO(){ const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); }
+function fmtDate(iso){ if(!iso) return ""; const [y,m,d]=iso.split("-"); return `${m}/${d}/${y.slice(2)}`; }
+function fmtLong(iso){ if(!iso) return ""; const d=new Date(iso+"T00:00:00"); return d.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"}); }
+function daysUntil(iso){ if(!iso) return null; const t=new Date(todayISO()+"T00:00:00"); const d=new Date(iso+"T00:00:00"); return Math.round((d-t)/86400000); }
+function catColor(c){ return CAT_COLORS[c]||CAT_COLORS._default; }
+function escapeHtml(s){ return (s||"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
+function toast(msg){ const t=$("#toast"); t.innerHTML=`<span class="ck">✓</span> ${msg}`; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2200); }
+let curDate = todayISO();
+
+/* ---------- rich text ---------- */
+function buildRT(el){
+  const target = el.dataset.target;
+  const tb = document.createElement("div"); tb.className="rt-toolbar";
+  const btns=[["bold","𝐁","Bold"],["italic","𝑰","Italic"],["underline","U̲","Underline"],["sep"],
+    ["insertUnorderedList","•","Bullet list"],["insertOrderedList","1.","Numbered list"]];
+  btns.forEach(b=>{
+    if(b[0]==="sep"){ const s=document.createElement("div"); s.className="sep"; tb.appendChild(s); return; }
+    const btn=document.createElement("button"); btn.type="button"; btn.textContent=b[1]; btn.title=b[2];
+    btn.onmousedown=e=>{e.preventDefault(); document.execCommand(b[0],false,null); ed.focus();};
+    tb.appendChild(btn);
+  });
+  const ed = document.createElement("div");
+  ed.className="rt-editor"; ed.contentEditable="true"; ed.dataset.ph=el.dataset.ph||"";
+  ed.id="rt_"+target; ed.dataset.field=target;
+  el.appendChild(tb); el.appendChild(ed);
+  return ed;
+}
+function initRTs(){ $$(".rt").forEach(el=>{ if(!el.querySelector(".rt-editor")) buildRT(el); }); }
+function getRT(target){ const ed=$("#rt_"+target); return ed?ed.innerHTML.trim():""; }
+function setRT(target,html){ const ed=$("#rt_"+target); if(ed) ed.innerHTML=html||""; }
+function clearRT(target){ setRT(target,""); }
+
+/* ---------- views ---------- */
+$$(".nav button").forEach(b=>b.onclick=()=>{
+  // preserve unsaved brief edits when leaving the Today tab
+  if($("#view-today").classList.contains("active") && b.dataset.view!=="today"){
+    capturePhaseFromDOM();
+  }
+  $$(".nav button").forEach(x=>x.classList.remove("active"));
+  $$(".view").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  $("#view-"+b.dataset.view).classList.add("active");
+  if(b.dataset.view==="today") renderPhase();
+  if(b.dataset.view==="followups") renderFus();
+  if(b.dataset.view==="archive") renderArchive();
+  if(b.dataset.view==="history") renderHist();
+  if(b.dataset.view==="lanes"){ renderLaneTable(); renderOwnerTable(); }
+});
+
+/* ---------- today / brief (per-lane, per-phase) ---------- */
+let curPhase = "am";
+// in-memory working copy of the current day while editing (so phase switches don't lose edits)
+let dayDraft = {am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}};
+
+const PHASE_PURPOSE = {
+  am:"Drive same-day execution, surface issues early, and build daily accountability.",
+  pm:"Evaluate performance, capture learnings, and reinforce accountability."
+};
+const NET_TITLE = {am:"Network-wide notes", pm:"Network-wide debrief"};
+const NET_HINT = {
+  am:"Overnight review, today's plan, key focus items and support needed across the network.",
+  pm:"What went well, what to improve, and commitments that span the whole network."
+};
+
+function blankDay(){ return {am:{net:"",lanes:{},owners:{}}, pm:{net:"",lanes:{},owners:{}}}; }
+
+// pull whatever is currently typed/selected in the visible editors into dayDraft[curPhase]
+function capturePhaseFromDOM(){
+  const p = dayDraft[curPhase];
+  p.net = getRT("net_"+curPhase);
+  if(!p.lanes) p.lanes={};
+  if(!p.owners) p.owners={};
+  store.lanes.forEach(L=>{ p.lanes[L.id] = getRT("lane_"+curPhase+"_"+L.id); });
+  // owners are captured live via the chip picker onto dayDraft directly; nothing to read from DOM here
+}
+// the day's owners for a lane, defaulting to the lane's roster owner(s) if none set yet
+function laneOwnersForDay(p, L){
+  if(p.owners && Array.isArray(p.owners[L.id])) return p.owners[L.id];
+  // seed default from roster owner string (may already be a single name)
+  return L.owner ? [L.owner] : [];
+}
+
+// build the editor DOM for the current phase from dayDraft
+function renderPhase(){
+  const p = dayDraft[curPhase];
+  $("#phasePurpose").textContent = PHASE_PURPOSE[curPhase];
+  $("#netTitle").textContent = NET_TITLE[curPhase];
+  $("#netHint").textContent = NET_HINT[curPhase];
+
+  // network card
+  const nb=$("#netBody");
+  nb.innerHTML = `<div class="field"><div class="rt" data-target="net_${curPhase}" data-ph="${PHASE_PROMPTS[curPhase]}"></div></div>`;
+
+  // lane cards
+  const lc=$("#laneCards"); lc.innerHTML="";
+  if(!p.owners) p.owners={};
+  store.lanes.forEach(L=>{
+    const has = p.lanes[L.id] && stripHtml(p.lanes[L.id]).trim();
+    const card=document.createElement("div");
+    card.className="lane-card"+(has?" has":"");
+    card.innerHTML=`
+      <div class="lhead">
+        <div class="meta">
+          <div class="cc">CC ${escapeHtml(L.cc)}</div>
+          <div class="ln">${escapeHtml(L.lane)}</div>
+          <div class="ow">
+            <span class="ow-label">Owner(s) today:</span>
+            <span class="owner-chips" data-laneowner="${L.id}"></span>
+          </div>
+        </div>
+        <span class="filled-dot" title="Has notes"></span>
+      </div>
+      <div class="lbody"><div class="field"><div class="rt" data-target="lane_${curPhase}_${L.id}" data-ph="Notes for this lane…"></div></div></div>`;
+    lc.appendChild(card);
+  });
+
+  initRTs();
+  // populate values
+  setRT("net_"+curPhase, p.net||"");
+  store.lanes.forEach(L=> setRT("lane_"+curPhase+"_"+L.id, p.lanes[L.id]||""));
+  // owner chip pickers (multi-owner, per day)
+  store.lanes.forEach(L=>{
+    if(!Array.isArray(p.owners[L.id])) p.owners[L.id]=laneOwnersForDay(p, L).slice();
+    renderOwnerChips(L.id);
+  });
+  // live filled-dot updates
+  $$("#laneCards .rt-editor").forEach(ed=>{
+    ed.addEventListener("input",()=>{
+      const card=ed.closest(".lane-card");
+      card.classList.toggle("has", !!ed.textContent.trim());
+    });
+  });
+}
+
+// render the owner chips + add control for one lane on the current phase
+function renderOwnerChips(laneId){
+  const host=$(`.owner-chips[data-laneowner="${laneId}"]`);
+  if(!host) return;
+  const p=dayDraft[curPhase];
+  const chosen = p.owners[laneId]||[];
+  let html="";
+  chosen.forEach(name=>{
+    html+=`<span class="owner-chip">${escapeHtml(name)}<button type="button" class="chip-x" data-rm="${escapeHtml(name)}" title="Remove">×</button></span>`;
+  });
+  // add picker: only names not already chosen
+  const avail=sortedOwners().filter(o=>!chosen.includes(o));
+  html+=`<select class="owner-add-sel" data-add="${laneId}"><option value="">+ add owner</option>${avail.map(o=>`<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("")}</select>`;
+  host.innerHTML=html;
+  host.querySelectorAll(".chip-x").forEach(btn=>btn.onclick=()=>{
+    p.owners[laneId]=(p.owners[laneId]||[]).filter(n=>n!==btn.dataset.rm);
+    renderOwnerChips(laneId);
+  });
+  const sel=host.querySelector(".owner-add-sel");
+  if(sel) sel.onchange=()=>{
+    if(sel.value && !p.owners[laneId].includes(sel.value)){ p.owners[laneId].push(sel.value); renderOwnerChips(laneId); }
+  };
+}
+
+function loadDay(iso){
+  curDate=iso;
+  const saved = store.days[iso];
+  dayDraft = saved ? JSON.parse(JSON.stringify(saved)) : blankDay();
+  if(!dayDraft.am) dayDraft.am={net:"",lanes:{},owners:{}};
+  if(!dayDraft.pm) dayDraft.pm={net:"",lanes:{},owners:{}};
+  if(!dayDraft.am.owners) dayDraft.am.owners={};
+  if(!dayDraft.pm.owners) dayDraft.pm.owners={};
+  renderPhase();
+}
+
+function gatherDay(){
+  capturePhaseFromDOM();
+  return {am:dayDraft.am, pm:dayDraft.pm, savedAt:new Date().toISOString()};
+}
+function dayHasContent(d){
+  const chk=p=>p && (stripHtml(p.net).trim() || Object.values(p.lanes||{}).some(v=>stripHtml(v).trim()));
+  return chk(d.am)||chk(d.pm);
+}
+
+// phase toggle
+$$(".phase-btn").forEach(b=>b.onclick=()=>{
+  if(b.dataset.phase===curPhase) return;
+  capturePhaseFromDOM();                 // keep current edits
+  $$(".phase-btn").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  curPhase=b.dataset.phase;
+  renderPhase();
+});
+
+$("#opDate").onchange = e=>{ loadDay(e.target.value); };
+$("#saveDay").onclick = async ()=>{
+  const d=gatherDay();
+  if(!dayHasContent(d)){ toast("Nothing to save yet"); return; }
+  store.days[curDate]=d;
+  await saveDays();
+  toast("Day saved — "+fmtDate(curDate));
+};
+
+/* ---------- categories ---------- */
+function renderCatFilters(){
+  const wrap=$("#catFilters");
+  wrap.innerHTML='<span class="chip cat-chip active" data-cat="all">All categories</span>';
+  store.cats.forEach(c=>{
+    const [bg,fg]=catColor(c);
+    const s=document.createElement("span");
+    s.className="chip cat-chip"; s.dataset.cat=c; s.textContent=c;
+    wrap.appendChild(s);
+  });
+  $$(".cat-chip").forEach(ch=>ch.onclick=()=>{
+    $$(".cat-chip").forEach(x=>x.classList.remove("active")); ch.classList.add("active");
+    activeCat=ch.dataset.cat; renderFus();
+  });
+}
+function fillCatSelect(){
+  const sel=$("#fuCat"); sel.innerHTML="";
+  store.cats.forEach(c=>{ const o=document.createElement("option"); o.value=c; o.textContent=c; sel.appendChild(o); });
+}
+$("#fuAddCat").onclick=async ()=>{
+  const v=$("#fuNewCat").value.trim();
+  if(!v) return;
+  if(!store.cats.includes(v)){ store.cats.push(v); await saveCats(); fillCatSelect(); renderCatFilters(); }
+  $("#fuCat").value=v; $("#fuNewCat").value="";
+};
+
+/* ---------- follow-ups (open) + archive (completed) ---------- */
+let activeCat="all";
+$("#fuSearch").oninput=()=>renderFus();
+$("#arSearch") && ($("#arSearch").oninput=()=>renderArchive());
+
+function fuStats(){
+  const open=store.fus.filter(f=>!f.done);
+  const done=store.fus.filter(f=>f.done);
+  $("#stTotal").textContent=open.length;
+  $("#stDone").textContent=done.length;
+  $("#stOverdue").textContent=open.filter(f=>{const n=daysUntil(f.due);return n!==null&&n<0;}).length;
+  $("#stSoon").textContent=open.filter(f=>{const n=daysUntil(f.due);return n!==null&&n>=0&&n<=3;}).length;
+  $("#openPill").textContent=open.length;
+  const ap=$("#archivePill"); if(ap) ap.textContent=done.length;
+  const ac=$("#archiveCount"); if(ac) ac.textContent=done.length?`(${done.length})`:"";
+}
+function fuRowHTML(f, mode){
+  const [bg,fg]=catColor(f.cat);
+  const n=daysUntil(f.due);
+  let dueCls="", dueExtra="";
+  if(!f.done && n!==null){ if(n<0){dueCls="overdue";dueExtra=` (${-n}d late)`;} else if(n<=3){dueCls="due-soon";dueExtra=n===0?" (today)":` (${n}d)`;} }
+  if(mode==="archive"){
+    const completed = f.completedAt ? new Date(f.completedAt).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"2-digit"}) : "—";
+    return `
+      <td style="color:var(--green);font-weight:700">${completed}</td>
+      <td>${fmtDate(f.date)}</td>
+      <td><span class="cat-badge" style="background:${bg};color:${fg}">${escapeHtml(f.cat)}</span></td>
+      <td class="notes-cell">${f.notes||'<span style="color:#bbb">—</span>'}</td>
+      <td>${escapeHtml(f.owner)||'<span style="color:#bbb">—</span>'}</td>
+      <td>${fmtDate(f.due)}</td>
+      <td class="notes-cell">${f.compNotes||'<span style="color:#bbb">—</span>'}</td>
+      <td><div class="row-actions">
+        <button class="icon-btn" data-reopen="${f.id}" title="Reopen">↩︎</button>
+        <button class="icon-btn del" data-del="${f.id}" title="Delete permanently">🗑️</button>
+      </div></td>`;
+  }
+  return `
+      <td><span class="check ${f.done?'on':''}" data-toggle="${f.id}">${f.done?'✓':''}</span></td>
+      <td>${fmtDate(f.date)}</td>
+      <td><span class="cat-badge" style="background:${bg};color:${fg}">${escapeHtml(f.cat)}</span></td>
+      <td class="notes-cell">${f.notes||'<span style="color:#bbb">—</span>'}</td>
+      <td>${escapeHtml(f.owner)||'<span style="color:#bbb">—</span>'}</td>
+      <td class="${dueCls}">${fmtDate(f.due)}${dueExtra}</td>
+      <td class="notes-cell">${f.compNotes||'<span style="color:#bbb">—</span>'}</td>
+      <td><div class="row-actions">
+        <button class="icon-btn" data-edit="${f.id}" title="Edit">✏️</button>
+        <button class="icon-btn del" data-del="${f.id}" title="Delete">🗑️</button>
+      </div></td>`;
+}
+function renderFus(){
+  fuStats();
+  const q=($("#fuSearch").value||"").toLowerCase();
+  const body=$("#fuBody"); body.innerHTML="";
+  let rows = store.fus.filter(f=>!f.done).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
+  rows=rows.filter(f=>{
+    if(activeCat!=="all"&&f.cat!==activeCat) return false;
+    if(q){
+      const blob=(f.cat+" "+f.owner+" "+stripHtml(f.notes)+" "+stripHtml(f.compNotes)).toLowerCase();
+      if(!blob.includes(q)) return false;
+    }
+    return true;
+  });
+  $("#fuEmpty").style.display = rows.length?"none":"block";
+  rows.forEach(f=>{ const tr=document.createElement("tr"); tr.innerHTML=fuRowHTML(f,"open"); body.appendChild(tr); });
+  wireFuRowActions();
+}
+function renderArchive(){
+  fuStats();
+  const q=($("#arSearch").value||"").toLowerCase();
+  const body=$("#arBody"); if(!body) return;
+  body.innerHTML="";
+  let rows = store.fus.filter(f=>f.done).sort((a,b)=>(b.completedAt||"").localeCompare(a.completedAt||""));
+  rows=rows.filter(f=>{
+    if(!q) return true;
+    const blob=(f.cat+" "+f.owner+" "+stripHtml(f.notes)+" "+stripHtml(f.compNotes)).toLowerCase();
+    return blob.includes(q);
+  });
+  $("#arEmpty").style.display = rows.length?"none":"block";
+  rows.forEach(f=>{ const tr=document.createElement("tr"); tr.className="done"; tr.innerHTML=fuRowHTML(f,"archive"); body.appendChild(tr); });
+  // reopen
+  $$("#arBody [data-reopen]").forEach(el=>el.onclick=async()=>{
+    const f=store.fus.find(x=>x.id===el.dataset.reopen);
+    f.done=false; delete f.completedAt;
+    const ok=await saveFus();
+    if(!ok){ toast("⚠️ Couldn't save — storage error"); return; }
+    renderArchive(); toast("Reopened — back in the active tracker");
+  });
+  // delete permanently
+  $$("#arBody [data-del]").forEach(el=>el.onclick=async()=>{
+    if(!confirm("Delete this completed item permanently?")) return;
+    store.fus=store.fus.filter(x=>x.id!==el.dataset.del);
+    await saveFus(); renderArchive();
+  });
+}
+function wireFuRowActions(){
+  $$("#fuBody [data-toggle]").forEach(el=>el.onclick=async()=>{
+    const f=store.fus.find(x=>x.id===el.dataset.toggle);
+    f.done=!f.done;
+    if(f.done){ if(!f.date) f.date=todayISO(); f.completedAt=new Date().toISOString(); }
+    else { delete f.completedAt; }
+    const ok=await saveFus();
+    if(!ok){ toast("⚠️ Couldn't save — storage error"); f.done=!f.done; return; }
+    renderFus();
+    if(f.done) toast("Completed — moved to Archive");
+  });
+  $$("#fuBody [data-edit]").forEach(el=>el.onclick=()=>openFu(el.dataset.edit));
+  $$("#fuBody [data-del]").forEach(el=>el.onclick=async()=>{
+    if(!confirm("Delete this follow-up?")) return;
+    store.fus=store.fus.filter(x=>x.id!==el.dataset.del);
+    await saveFus(); renderFus();
+  });
+}
+// stat-card and link navigation to archive
+function gotoArchive(){
+  $$(".nav button").forEach(x=>x.classList.remove("active"));
+  $$(".view").forEach(x=>x.classList.remove("active"));
+  $('.nav button[data-view="archive"]').classList.add("active");
+  $("#view-archive").classList.add("active");
+  renderArchive();
+}
+$("#goArchive") && ($("#goArchive").onclick=(e)=>{ e.preventDefault(); gotoArchive(); });
+$("#goArchiveStat") && ($("#goArchiveStat").onclick=gotoArchive);
+function stripHtml(h){ const d=document.createElement("div"); d.innerHTML=h||""; return d.textContent||""; }
+
+/* ---------- follow-up modal ---------- */
+function openFu(id){
+  fillCatSelect();
+  const editing = !!id;
+  $("#fuModalTitle").textContent = editing?"Edit Follow-up":"New Follow-up";
+  let f = editing ? store.fus.find(x=>x.id===id) : {id:null,date:todayISO(),due:"",cat:store.cats[0],owner:"",notes:"",done:false,compNotes:""};
+  $("#fuId").value=f.id||"";
+  $("#fuDate").value=f.date||todayISO();
+  $("#fuDue").value=f.due||"";
+  $("#fuCat").value=f.cat||store.cats[0];
+  $("#fuOwner").value=f.owner||"";
+  setRT("fuNotes",f.notes||"");
+  setRT("fuCompNotes",f.compNotes||"");
+  setDone(f.done);
+  $("#fuNewCat").value="";
+  $("#fuOverlay").classList.add("show");
+}
+function setDone(v){
+  const c=$("#fuDoneCheck");
+  c.classList.toggle("on",v); c.textContent=v?"✓":"";
+  c.dataset.v=v?"1":"0";
+  $("#fuCompWrap").style.display=v?"block":"none";
+}
+$("#fuDoneCheck").onclick=()=>setDone($("#fuDoneCheck").dataset.v!=="1");
+function closeFu(){ $("#fuOverlay").classList.remove("show"); }
+$("#fuClose").onclick=closeFu; $("#fuCancel").onclick=closeFu;
+$("#fuOverlay").onclick=e=>{ if(e.target===$("#fuOverlay")) closeFu(); };
+$("#newFu").onclick=()=>openFu(null);
+$("#fuSave").onclick=async()=>{
+  const id=$("#fuId").value;
+  const done=$("#fuDoneCheck").dataset.v==="1";
+  const data={
+    date:$("#fuDate").value||todayISO(),
+    due:$("#fuDue").value,
+    cat:$("#fuCat").value,
+    owner:$("#fuOwner").value.trim(),
+    notes:getRT("fuNotes"),
+    done, compNotes:getRT("fuCompNotes")
+  };
+  if(id){
+    const existing=store.fus.find(x=>x.id===id);
+    const wasDone=existing.done;
+    Object.assign(existing,data);
+    if(data.done && !wasDone) existing.completedAt=new Date().toISOString();
+    if(!data.done && wasDone) delete existing.completedAt;
+  }
+  else {
+    data.id="fu_"+Date.now()+"_"+Math.random().toString(36).slice(2,6);
+    if(data.done) data.completedAt=new Date().toISOString();
+    store.fus.push(data);
+  }
+  const ok=await saveFus();
+  if(!ok){ toast("⚠️ Couldn't save — storage error. Try exporting as backup."); return; }
+  closeFu(); renderFus();
+  if($("#view-archive").classList.contains("active")) renderArchive();
+  toast(data.done?"Saved — in Archive":"Follow-up saved");
+};
+$("#addFromBrief").onclick=()=>{
+  // jump to followups tab and open a new item pre-stamped to the operating day
+  $$(".nav button").forEach(x=>x.classList.remove("active"));
+  $$(".view").forEach(x=>x.classList.remove("active"));
+  $('.nav button[data-view="followups"]').classList.add("active");
+  $("#view-followups").classList.add("active");
+  renderFus(); openFu(null); $("#fuDate").value=curDate;
+};
+
+/* ---------- import notes (paste & parse) ---------- */
+// Convert a plain-text block into simple safe HTML: bullet lines -> <ul>, others -> <p>
+function notesTextToHTML(text){
+  const lines=text.split(/\r?\n/).map(l=>l.replace(/\s+$/,""));
+  let html="", inList=false;
+  const closeList=()=>{ if(inList){ html+="</ul>"; inList=false; } };
+  lines.forEach(raw=>{
+    const line=raw.trim();
+    if(!line){ closeList(); return; }
+    const bullet=/^[-*•]\s+/.test(line);
+    if(bullet){
+      if(!inList){ html+="<ul>"; inList=true; }
+      html+="<li>"+escapeHtml(line.replace(/^[-*•]\s+/,""))+"</li>";
+    }else{
+      closeList();
+      html+="<p>"+escapeHtml(line)+"</p>";
+    }
+  });
+  closeList();
+  return html;
+}
+// Find a lane by a cost-center token like "151"
+function laneByCC(cc){
+  const norm=String(cc).trim().toLowerCase();
+  return store.lanes.find(L=>String(L.cc).trim().toLowerCase()===norm);
+}
+// Parse pasted text into {net, lanes:{id:html}, owners:{id:[names]}, items:[preview rows]}
+function parseImport(text){
+  const result={net:"", lanes:{}, owners:{}, rows:[]};
+  // split into marker-led chunks
+  const re=/^(NET|CC\s*[\w-]+|OWNERS\s*[\w-]+)\s*:/i;
+  const lines=text.split(/\r?\n/);
+  let cur=null, buf=[];
+  const flush=()=>{
+    if(cur===null) return;
+    const body=buf.join("\n").trim();
+    if(cur.type==="net"){
+      result.net=notesTextToHTML(body);
+      result.rows.push({tag:"NET", label:"Network-wide", snip:body, ok:true});
+    }else if(cur.type==="lane"){
+      if(cur.lane){
+        result.lanes[cur.lane.id]=notesTextToHTML(body);
+        result.rows.push({tag:"CC "+cur.lane.cc, label:cur.lane.lane, snip:body, ok:true});
+      }else{
+        result.rows.push({tag:"CC "+cur.raw, label:"No matching lane — skipped", snip:body, ok:false});
+      }
+    }else if(cur.type==="owners"){
+      if(cur.lane){
+        const names=body.split(/[,;]/).map(s=>s.trim()).filter(Boolean);
+        result.owners[cur.lane.id]=names;
+        result.rows.push({tag:"OWNERS "+cur.lane.cc, label:names.join(", ")||"(cleared)", snip:"", ok:true});
+      }else{
+        result.rows.push({tag:"OWNERS "+cur.raw, label:"No matching lane — skipped", snip:body, ok:false});
+      }
+    }
+    buf=[];
+  };
+  lines.forEach(line=>{
+    const m=line.match(re);
+    if(m){
+      flush();
+      const head=m[1].trim();
+      const rest=line.slice(m[0].length);
+      if(/^NET$/i.test(head)){ cur={type:"net"}; }
+      else if(/^OWNERS/i.test(head)){ const cc=head.replace(/^OWNERS\s*/i,""); cur={type:"owners", raw:cc, lane:laneByCC(cc)}; }
+      else { const cc=head.replace(/^CC\s*/i,""); cur={type:"lane", raw:cc, lane:laneByCC(cc)}; }
+      buf.push(rest);
+    }else{
+      if(cur!==null) buf.push(line);
+    }
+  });
+  flush();
+  return result;
+}
+let lastImport=null;
+function openImport(){
+  $("#importTitle").textContent="Import notes into "+(curPhase==="am"?"Morning Brief":"Afternoon Debrief");
+  $("#importText").value="";
+  $("#importAppend").checked=false;
+  $("#importPreview").style.display="none";
+  $("#importPreview").innerHTML="";
+  $("#importApply").disabled=true;
+  lastImport=null;
+  $("#importOverlay").classList.add("show");
+  setTimeout(()=>$("#importText").focus(),60);
+}
+function closeImport(){ $("#importOverlay").classList.remove("show"); }
+$("#importBriefBtn").onclick=openImport;
+$("#importClose").onclick=closeImport; $("#importCancel").onclick=closeImport;
+$("#importOverlay").onclick=e=>{ if(e.target===$("#importOverlay")) closeImport(); };
+$("#importPreviewBtn").onclick=()=>{
+  const text=$("#importText").value.trim();
+  if(!text){ toast("Paste some notes first"); return; }
+  const parsed=parseImport(text);
+  if(!parsed.rows.length){
+    $("#importPreview").style.display="block";
+    $("#importPreview").innerHTML=`<div class="pv-head">Preview</div><div class="pv-row unmatched"><span class="tag">!</span>No markers found. Start lines with <b>NET:</b> or <b>CC 151:</b></div>`;
+    $("#importApply").disabled=true; lastImport=null; return;
+  }
+  let rowsHtml="";
+  parsed.rows.forEach(r=>{
+    const snip=r.snip ? '<span class="pv-snip">'+escapeHtml(r.snip.slice(0,110))+(r.snip.length>110?"…":"")+"</span>" : "";
+    rowsHtml+=`<div class="pv-row${r.ok?"":" unmatched"}"><span class="tag">${escapeHtml(r.tag)}</span>${escapeHtml(r.label)}${snip?"<br>"+snip:""}</div>`;
+  });
+  $("#importPreview").style.display="block";
+  $("#importPreview").innerHTML=`<div class="pv-head">Preview — ${curPhase.toUpperCase()} · ${$("#importAppend").checked?"append":"replace"}</div>`+rowsHtml;
+  lastImport=parsed;
+  $("#importApply").disabled = !parsed.rows.some(r=>r.ok);
+};
+// re-preview if the append toggle changes after a preview
+$("#importAppend").onchange=()=>{ if(lastImport) $("#importPreviewBtn").click(); };
+$("#importApply").onclick=()=>{
+  if(!lastImport) return;
+  // capture current editor state so we don't lose anything, then merge
+  capturePhaseFromDOM();
+  const p=dayDraft[curPhase];
+  if(!p.lanes) p.lanes={};
+  if(!p.owners) p.owners={};
+  const append=$("#importAppend").checked;
+  const merge=(existing,incoming)=>{
+    if(!incoming) return existing||"";
+    if(append && existing && stripHtml(existing).trim()) return existing+incoming;
+    return incoming;
+  };
+  if(lastImport.net) p.net = merge(p.net, lastImport.net);
+  Object.keys(lastImport.lanes).forEach(id=>{ p.lanes[id]=merge(p.lanes[id], lastImport.lanes[id]); });
+  Object.keys(lastImport.owners).forEach(id=>{ p.owners[id]=lastImport.owners[id].slice(); });
+  renderPhase();
+  closeImport();
+  const n=lastImport.rows.filter(r=>r.ok).length;
+  toast(`Imported ${n} section${n>1?"s":""} — review and Save day`);
+};
+
+/* ---------- export ---------- */
+function getFilteredFus(){
+  const q=($("#fuSearch").value||"").toLowerCase();
+  return store.fus.filter(f=>!f.done).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999")).filter(f=>{
+    if(activeCat!=="all"&&f.cat!==activeCat) return false;
+    if(q){
+      const blob=(f.cat+" "+f.owner+" "+stripHtml(f.notes)+" "+stripHtml(f.compNotes)).toLowerCase();
+      if(!blob.includes(q)) return false;
+    }
+    return true;
+  });
+}
+function getArchivedFus(){
+  const q=($("#arSearch")&&$("#arSearch").value||"").toLowerCase();
+  return store.fus.filter(f=>f.done).sort((a,b)=>(b.completedAt||"").localeCompare(a.completedAt||"")).filter(f=>{
+    if(!q) return true;
+    const blob=(f.cat+" "+f.owner+" "+stripHtml(f.notes)+" "+stripHtml(f.compNotes)).toLowerCase();
+    return blob.includes(q);
+  });
+}
+const EXPORT_COLS=["Date Added","Category","Notes","Owner","Due Date","Completed","Completion Notes"];
+function fuRow(f){
+  return [ f.date||"", f.cat||"", stripHtml(f.notes), f.owner||"", f.due||"",
+           f.done?"Yes":"No", stripHtml(f.compNotes) ];
+}
+function downloadFile(name, content, mime){
+  const blob=new Blob([content],{type:mime});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function csvEscape(v){ v=(v==null?"":String(v)); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
+function toCSV(items){
+  const lines=[EXPORT_COLS.map(csvEscape).join(",")];
+  items.forEach(f=> lines.push(fuRow(f).map(csvEscape).join(",")));
+  return "\ufeff"+lines.join("\r\n"); // BOM so Excel reads UTF-8
+}
+function toExcelXML(items){
+  // SpreadsheetML 2003 — opens natively in Excel as a real worksheet
+  const cell=(v,t)=>`<Cell><Data ss:Type="${t}">${escapeHtml(String(v==null?"":v))}</Data></Cell>`;
+  const head=`<Row>${EXPORT_COLS.map(c=>`<Cell ss:StyleID="h"><Data ss:Type="String">${c}</Data></Cell>`).join("")}</Row>`;
+  const body=items.map(f=>{
+    const r=fuRow(f);
+    return `<Row>${r.map(v=>cell(v,"String")).join("")}</Row>`;
+  }).join("");
+  return `<?xml version="1.0"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+<Styles><Style ss:ID="h"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#0E2A47" ss:Pattern="Solid"/></Style></Styles>
+<Worksheet ss:Name="Follow-ups"><Table>
+<Column ss:Width="80"/><Column ss:Width="80"/><Column ss:Width="300"/><Column ss:Width="110"/><Column ss:Width="80"/><Column ss:Width="70"/><Column ss:Width="300"/>
+${head}${body}
+</Table></Worksheet></Workbook>`;
+}
+$("#exportBtn").onclick=(e)=>{ e.stopPropagation(); $("#exportMenu").classList.toggle("show"); };
+document.addEventListener("click",()=>$("#exportMenu").classList.remove("show"));
+$("#exportMenu").addEventListener("click",e=>e.stopPropagation());
+$$("#exportMenu button").forEach(b=>b.onclick=()=>{
+  const fmt=b.dataset.fmt;
+  const stamp=todayISO();
+  const items = fmt==="csv-filtered" ? getFilteredFus() : store.fus.slice();
+  if(!items.length){ toast("No follow-ups to export"); $("#exportMenu").classList.remove("show"); return; }
+  if(fmt==="excel"){
+    downloadFile(`Expedited_Followups_${stamp}.xls`, toExcelXML(items), "application/vnd.ms-excel");
+  }else{
+    downloadFile(`Expedited_Followups_${stamp}.csv`, toCSV(items), "text/csv;charset=utf-8");
+  }
+  $("#exportMenu").classList.remove("show");
+  toast(`Exported ${items.length} item${items.length>1?"s":""}`);
+});
+
+// archive export
+$("#arExportBtn") && ($("#arExportBtn").onclick=(e)=>{ e.stopPropagation(); $("#arExportMenu").classList.toggle("show"); });
+$("#arExportMenu") && $("#arExportMenu").addEventListener("click",e=>e.stopPropagation());
+document.addEventListener("click",()=>{ const m=$("#arExportMenu"); if(m) m.classList.remove("show"); });
+$$("#arExportMenu button").forEach(b=>b.onclick=()=>{
+  const fmt=b.dataset.fmt;
+  const stamp=todayISO();
+  const items=getArchivedFus();
+  if(!items.length){ toast("No archived items to export"); $("#arExportMenu").classList.remove("show"); return; }
+  if(fmt==="excel"){
+    downloadFile(`Expedited_Archive_${stamp}.xls`, toExcelXML(items), "application/vnd.ms-excel");
+  }else{
+    downloadFile(`Expedited_Archive_${stamp}.csv`, toCSV(items), "text/csv;charset=utf-8");
+  }
+  $("#arExportMenu").classList.remove("show");
+  toast(`Exported ${items.length} item${items.length>1?"s":""}`);
+});
+
+/* ---------- export brief to PDF ---------- */
+function briefToPrintHTML(){
+  // make sure current edits are captured into dayDraft
+  capturePhaseFromDOM();
+  const p = dayDraft[curPhase];
+  const phaseLabel = curPhase==="am" ? "Morning Brief" : "Afternoon Debrief";
+  const ownersFor=(L)=>{
+    const arr = p.owners && Array.isArray(p.owners[L.id]) ? p.owners[L.id] : (L.owner?[L.owner]:[]);
+    return arr.length ? arr.join(", ") : "—";
+  };
+  let laneBlocks="";
+  store.lanes.forEach(L=>{
+    const notes = p.lanes[L.id] && stripHtml(p.lanes[L.id]).trim() ? p.lanes[L.id] : '<span style="color:#999">No notes</span>';
+    laneBlocks += `
+      <div class="lane">
+        <div class="lane-h"><span class="cc">CC ${escapeHtml(L.cc)}</span> ${escapeHtml(L.lane)}
+          <span class="own">${escapeHtml(ownersFor(L))}</span></div>
+        <div class="lane-b">${notes}</div>
+      </div>`;
+  });
+  const netBlock = p.net && stripHtml(p.net).trim() ? p.net : '<span style="color:#999">No network-wide notes</span>';
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Expedited ${phaseLabel} — ${fmtDate(curDate)}</title>
+  <style>
+    @page{margin:0.6in}
+    *{box-sizing:border-box}
+    body{font-family:'Segoe UI',Arial,sans-serif;color:#1b2733;margin:0;font-size:12px;line-height:1.5}
+    .hdr{background:#0e2a47;color:#fff;padding:16px 20px;display:flex;align-items:center;gap:14px}
+    .hdr .mk{width:34px;height:34px;border-radius:8px;background:#f37021;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px}
+    .hdr h1{margin:0;font-size:17px}
+    .hdr .sub{font-size:11px;color:#aac4dd;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+    .hdr .badge{margin-left:auto;text-align:right;font-size:12px}
+    .hdr .badge .ph{background:#f37021;border-radius:6px;padding:3px 10px;font-weight:700;display:inline-block}
+    .wrap{padding:18px 20px}
+    h2{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:#f37021;margin:0 0 6px;border-bottom:1px solid #dce3ec;padding-bottom:4px}
+    .net{background:#fafbfd;border:1px solid #dce3ec;border-radius:8px;padding:11px 13px;margin-bottom:18px}
+    .lane-section{break-before:page;page-break-before:always}
+    .lane-section h2{break-after:avoid;page-break-after:avoid}
+    .lanes-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .lane{border:1px solid #dce3ec;border-radius:8px;overflow:hidden;break-inside:avoid}
+    .lane-h{background:#fafbfd;border-bottom:1px solid #dce3ec;padding:7px 11px;font-weight:700;color:#0e2a47;font-size:12px}
+    .lane-h .cc{color:#f37021;font-weight:800;font-size:11px}
+    .lane-h .own{display:block;font-size:10.5px;color:#64748b;font-weight:600;margin-top:1px}
+    .lane-b{padding:9px 11px}
+    .lane-b ul,.lane-b ol{margin:4px 0 4px 18px;padding:0}
+    .lane-b p{margin:4px 0}
+    .ftr{margin-top:16px;padding-top:8px;border-top:1px solid #dce3ec;color:#94a3b8;font-size:10px;display:flex;justify-content:space-between}
+  </style></head><body>
+    <div class="hdr">
+      <div class="mk">E</div>
+      <div><h1>Expedited ${phaseLabel}</h1><div class="sub">Operating Rhythm · Hirschbach</div></div>
+      <div class="badge"><div class="ph">${curPhase.toUpperCase()}</div><div style="margin-top:4px">${fmtLong(curDate)}</div></div>
+    </div>
+    <div class="wrap">
+      <h2>Network-wide</h2>
+      <div class="net">${netBlock}</div>
+      <div class="lane-section">
+        <h2>By Lane</h2>
+        <div class="lanes-grid">${laneBlocks}</div>
+      </div>
+      <div class="ftr"><span>Generated ${new Date().toLocaleString("en-US")}</span><span>Hirschbach · Expedited Division</span></div>
+    </div>
+  </body></html>`;
+}
+$("#briefPdfBtn").onclick=()=>{
+  const w=window.open("","_blank");
+  if(!w){ toast("Allow pop-ups to export the PDF"); return; }
+  w.document.write(briefToPrintHTML());
+  w.document.close();
+  // give it a beat to render, then open the print dialog (user chooses "Save as PDF")
+  setTimeout(()=>{ w.focus(); w.print(); }, 350);
+};
+
+/* ---------- email action items ---------- */
+function buildActionItemsEmail(items){
+  // group by owner for a clean, scannable email
+  const open = items.filter(f=>!f.done);
+  const lines=[];
+  lines.push("Expedited — Open Action Items");
+  lines.push("Generated "+new Date().toLocaleString("en-US"));
+  lines.push("");
+  if(!open.length){ lines.push("No open action items."); return lines.join("\r\n"); }
+
+  const byOwner={};
+  open.forEach(f=>{ const o=f.owner||"Unassigned"; (byOwner[o]=byOwner[o]||[]).push(f); });
+  Object.keys(byOwner).sort((a,b)=>a.localeCompare(b)).forEach(owner=>{
+    lines.push("== "+owner+" ==");
+    byOwner[owner]
+      .sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"))
+      .forEach(f=>{
+        const due=f.due?` (due ${fmtDate(f.due)})`:"";
+        const cat=f.cat?`[${f.cat}] `:"";
+        lines.push(`• ${cat}${stripHtml(f.notes).trim()||"(no detail)"}${due}`);
+      });
+    lines.push("");
+  });
+  return lines.join("\r\n");
+}
+$("#emailFuBtn").onclick=()=>{
+  const open=store.fus.filter(f=>!f.done);
+  if(!open.length){ toast("No open action items to email"); return; }
+  const subject=`Expedited Action Items — ${fmtDate(todayISO())}`;
+  const body=buildActionItemsEmail(store.fus);
+  const href="mailto:?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
+  // mailto has length limits; if very long, fall back to copying
+  if(href.length>1900){
+    navigator.clipboard?.writeText(body);
+    toast("Too long for email draft — copied to clipboard instead");
+    return;
+  }
+  window.location.href=href;
+  toast("Opening email draft…");
+};
+
+/* ---------- history ---------- */
+$("#histSearch").oninput=()=>renderHist();
+function dayBlob(d){
+  let parts=[];
+  ["am","pm"].forEach(ph=>{ const p=d[ph]; if(!p) return; parts.push(stripHtml(p.net)); Object.values(p.lanes||{}).forEach(v=>parts.push(stripHtml(v))); });
+  return parts.join(" ").toLowerCase();
+}
+function phaseSection(d,ph){
+  const p=d[ph]||{net:"",lanes:{},owners:{}};
+  const ownersFor=(L)=>{
+    const arr = p.owners && Array.isArray(p.owners[L.id]) ? p.owners[L.id] : (L.owner?[L.owner]:[]);
+    return arr.length ? arr.join(", ") : "—";
+  };
+  let html=`<div class="he-section"><h4>${ph==="am"?"AM · Network-wide":"PM · Network-wide"}</h4><div class="content">${p.net||""}</div></div>`;
+  const shown=new Set();
+  store.lanes.forEach(L=>{
+    const v=p.lanes&&p.lanes[L.id];
+    if(v && stripHtml(v).trim()){
+      shown.add(L.id);
+      html+=`<div class="he-section"><h4>${ph.toUpperCase()} · CC ${escapeHtml(L.cc)} — ${escapeHtml(ownersFor(L))}</h4><div class="content">${v}</div></div>`;
+    }
+  });
+  // notes saved against lanes that have since been removed/renamed — keep them visible
+  if(p.lanes){
+    Object.keys(p.lanes).forEach(id=>{
+      if(shown.has(id)) return;
+      const v=p.lanes[id];
+      if(v && stripHtml(v).trim()){
+        const own = p.owners && Array.isArray(p.owners[id]) && p.owners[id].length ? " — "+escapeHtml(p.owners[id].join(", ")) : "";
+        html+=`<div class="he-section"><h4>${ph.toUpperCase()} · ${escapeHtml(id)}${own} <span style="color:#94a3b8;font-weight:600">(retired lane)</span></h4><div class="content">${v}</div></div>`;
+      }
+    });
+  }
+  return html;
+}
+function renderHist(){
+  const q=($("#histSearch").value||"").toLowerCase();
+  const list=$("#histList"); list.innerHTML="";
+  const keys=Object.keys(store.days).sort().reverse();
+  let shown=0;
+  keys.forEach(iso=>{
+    const d=store.days[iso];
+    if(q && !dayBlob(d).includes(q)) return;
+    shown++;
+    // count filled lane+net sections across both phases
+    let filled=0, total=2*(store.lanes.length+1);
+    ["am","pm"].forEach(ph=>{ const p=d[ph]||{lanes:{}}; if(stripHtml(p.net).trim())filled++; store.lanes.forEach(L=>{ if(p.lanes&&stripHtml(p.lanes[L.id]).trim())filled++; }); });
+    const e=document.createElement("div"); e.className="hist-entry";
+    e.innerHTML=`
+      <div class="he-head">
+        <span class="d">${fmtLong(iso)}</span>
+        <span class="meta"><span>${filled}/${total} sections</span><span>Saved ${new Date(d.savedAt).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</span></span>
+        <span class="chev">▶</span>
+      </div>
+      <div class="he-body">
+        <div class="he-cols">
+          <div>${phaseSection(d,"am")}</div>
+          <div>${phaseSection(d,"pm")}</div>
+        </div>
+        <div style="margin-top:6px"><button class="btn ghost sm" data-open="${iso}">Open this day in editor</button></div>
+      </div>`;
+    e.querySelector(".he-head").onclick=()=>e.classList.toggle("open");
+    list.appendChild(e);
+  });
+  $("#histEmpty").style.display = shown?"none":"block";
+  $$("[data-open]").forEach(b=>b.onclick=()=>{
+    const iso=b.dataset.open;
+    $("#opDate").value=iso; loadDay(iso);
+    $$(".nav button").forEach(x=>x.classList.remove("active"));
+    $$(".view").forEach(x=>x.classList.remove("active"));
+    $('.nav button[data-view="today"]').classList.add("active");
+    $("#view-today").classList.add("active");
+  });
+}
+
+/* ---------- manage lanes ---------- */
+function slug(s){ return (s||"").toLowerCase().replace(/[^a-z0-9]+/g,"").slice(0,20); }
+function newLaneId(cc){
+  let base = "cc"+slug(cc||"")||"lane";
+  let id=base, n=2;
+  while(store.lanes.some(l=>l.id===id)){ id=base+"_"+n; n++; }
+  return id;
+}
+function renderLaneTable(){
+  const body=$("#laneBody"); body.innerHTML="";
+  $("#laneEmpty").style.display = store.lanes.length?"none":"block";
+  store.lanes.forEach((L,i)=>{
+    const tr=document.createElement("tr");
+    tr.dataset.idx=i; tr.draggable=false;
+    tr.innerHTML=`
+      <td class="drag" draggable="true" title="Drag to reorder">⋮⋮</td>
+      <td><span class="cc-pill">CC ${escapeHtml(L.cc)}</span></td>
+      <td class="lane-name">${escapeHtml(L.lane)}</td>
+      <td>${escapeHtml(L.owner)||'<span style="color:#bbb">—</span>'}</td>
+      <td><div class="row-actions">
+        <button class="icon-btn" data-led="${L.id}" title="Edit">✏️</button>
+        <button class="icon-btn del" data-ldel="${L.id}" title="Remove">🗑️</button>
+      </div></td>`;
+    body.appendChild(tr);
+  });
+  $$("[data-led]").forEach(b=>b.onclick=()=>openLane(b.dataset.led));
+  $$("[data-ldel]").forEach(b=>b.onclick=()=>removeLane(b.dataset.ldel));
+  wireLaneDrag();
+}
+function wireLaneDrag(){
+  let dragEl=null;
+  $$("#laneBody .drag").forEach(handle=>{
+    const tr=handle.closest("tr");
+    handle.ondragstart=e=>{ dragEl=tr; tr.classList.add("dragging"); e.dataTransfer.effectAllowed="move"; };
+    handle.ondragend=()=>{ tr.classList.remove("dragging"); $$("#laneBody tr").forEach(r=>r.classList.remove("drop-above","drop-below")); };
+  });
+  $$("#laneBody tr").forEach(row=>{
+    row.ondragover=e=>{
+      e.preventDefault();
+      if(!dragEl||row===dragEl) return;
+      const r=row.getBoundingClientRect();
+      const below = e.clientY > r.top + r.height/2;
+      $$("#laneBody tr").forEach(x=>x.classList.remove("drop-above","drop-below"));
+      row.classList.add(below?"drop-below":"drop-above");
+    };
+    row.ondrop=async e=>{
+      e.preventDefault();
+      if(!dragEl||row===dragEl) return;
+      const from=+dragEl.dataset.idx, to=+row.dataset.idx;
+      const r=row.getBoundingClientRect();
+      const below = e.clientY > r.top + r.height/2;
+      const item=store.lanes.splice(from,1)[0];
+      let insert = to + (below?1:0);
+      if(from < insert) insert--;
+      store.lanes.splice(insert,0,item);
+      await saveLanes(); renderLaneTable(); refreshLaneDependents();
+      toast("Lane order updated");
+    };
+  });
+}
+function openLane(id){
+  const editing=!!id;
+  $("#laneModalTitle").textContent = editing?"Edit Lane":"Add Lane";
+  const L = editing ? store.lanes.find(x=>x.id===id) : {id:null,cc:"",lane:"",owner:""};
+  $("#laneEditId").value=L.id||"";
+  $("#laneCC").value=L.cc||"";
+  $("#laneDesc").value=L.lane||"";
+  $("#laneOwner").value=L.owner||"";
+  $("#laneOverlay").classList.add("show");
+  setTimeout(()=>$("#laneCC").focus(),50);
+}
+function closeLane(){ $("#laneOverlay").classList.remove("show"); }
+$("#laneClose").onclick=closeLane; $("#laneCancel").onclick=closeLane;
+$("#laneOverlay").onclick=e=>{ if(e.target===$("#laneOverlay")) closeLane(); };
+$("#newLane").onclick=()=>openLane(null);
+$("#insertArrow").onclick=()=>{
+  const inp=$("#laneDesc"); const s=inp.selectionStart??inp.value.length;
+  inp.value = inp.value.slice(0,s)+" ↔ "+inp.value.slice(s); inp.focus();
+};
+$("#laneSaveBtn").onclick=async ()=>{
+  const cc=$("#laneCC").value.trim();
+  const lane=$("#laneDesc").value.trim();
+  const owner=$("#laneOwner").value.trim();
+  if(!cc && !lane){ toast("Add a cost center or lane name"); return; }
+  const id=$("#laneEditId").value;
+  if(id){
+    const L=store.lanes.find(x=>x.id===id);
+    L.cc=cc; L.lane=lane; L.owner=owner;
+  }else{
+    store.lanes.push({id:newLaneId(cc), cc, lane, owner});
+  }
+  await saveLanes(); closeLane(); renderLaneTable(); refreshLaneDependents();
+  toast(id?"Lane updated":"Lane added");
+};
+async function removeLane(id){
+  const L=store.lanes.find(x=>x.id===id);
+  // warn if any saved day has notes for this lane
+  let withNotes=0;
+  Object.values(store.days).forEach(d=>{
+    ["am","pm"].forEach(ph=>{ const v=d[ph]&&d[ph].lanes&&d[ph].lanes[id]; if(v&&stripHtml(v).trim()) withNotes++; });
+  });
+  const extra = withNotes ? `\n\n${withNotes} saved entr${withNotes>1?"ies":"y"} reference this lane. Those notes stay in History — they just won't show as an editable card going forward.` : "";
+  if(!confirm(`Remove lane "${L.cc?'CC '+L.cc:''} ${L.lane}"?${extra}`)) return;
+  store.lanes=store.lanes.filter(x=>x.id!==id);
+  await saveLanes(); renderLaneTable(); refreshLaneDependents();
+  toast("Lane removed");
+}
+$("#resetLanes").onclick=async ()=>{
+  if(!confirm("Reset the lane list back to the original 7 lanes? Saved daily notes are not affected.")) return;
+  store.lanes=JSON.parse(JSON.stringify(DEFAULT_LANES));
+  await saveLanes(); renderLaneTable(); refreshLaneDependents();
+  toast("Lanes reset to defaults");
+};
+// re-render the brief cards (and history if visible) after lane changes
+function refreshLaneDependents(){
+  if($("#view-today").classList.contains("active")){ capturePhaseFromDOM(); renderPhase(); }
+  if($("#view-history").classList.contains("active")) renderHist();
+}
+
+/* ---------- owners (shared roster) ---------- */
+function sortedOwners(){ return store.owners.slice().sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase())); }
+function refreshOwnerList(){
+  const dl=$("#ownerList"); if(!dl) return;
+  dl.innerHTML="";
+  sortedOwners().forEach(o=>{ const op=document.createElement("option"); op.value=o; dl.appendChild(op); });
+}
+function renderOwnerTable(){
+  const body=$("#ownerBody"); if(!body) return;
+  body.innerHTML="";
+  const list=sortedOwners();
+  $("#ownerEmpty").style.display = list.length?"none":"block";
+  list.forEach(name=>{
+    // count where this owner is referenced
+    const laneCount=store.lanes.filter(l=>l.owner===name).length;
+    const fuCount=store.fus.filter(f=>f.owner===name).length;
+    const refs=[];
+    if(laneCount) refs.push(`${laneCount} lane${laneCount>1?"s":""}`);
+    if(fuCount) refs.push(`${fuCount} follow-up${fuCount>1?"s":""}`);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td class="owner-name">${escapeHtml(name)}</td>
+      <td style="color:var(--muted);font-size:12.5px">${refs.length?refs.join(" · "):'<span style="color:#bbb">unused</span>'}</td>
+      <td><div class="row-actions">
+        <button class="icon-btn" data-oedit="${escapeHtml(name)}" title="Rename">✏️</button>
+        <button class="icon-btn del" data-odel="${escapeHtml(name)}" title="Remove">🗑️</button>
+      </div></td>`;
+    body.appendChild(tr);
+  });
+  $$("[data-oedit]").forEach(b=>b.onclick=()=>renameOwner(b.dataset.oedit));
+  $$("[data-odel]").forEach(b=>b.onclick=()=>removeOwner(b.dataset.odel));
+}
+$("#addOwnerBtn") && ($("#addOwnerBtn").onclick=async ()=>{
+  const inp=$("#newOwnerName"); const v=inp.value.trim();
+  if(!v){ toast("Type a name first"); return; }
+  if(store.owners.some(o=>o.toLowerCase()===v.toLowerCase())){ toast("That owner already exists"); return; }
+  store.owners.push(v); await saveOwners();
+  inp.value=""; renderOwnerTable(); refreshOwnerList();
+  toast("Owner added");
+});
+async function renameOwner(oldName){
+  const v=prompt("Rename owner:", oldName);
+  if(v===null) return;
+  const name=v.trim();
+  if(!name){ toast("Name can't be empty"); return; }
+  if(name===oldName) return;
+  if(store.owners.some(o=>o.toLowerCase()===name.toLowerCase() && o!==oldName)){ toast("That owner already exists"); return; }
+  // update roster
+  store.owners = store.owners.map(o=> o===oldName ? name : o);
+  // propagate to lanes and follow-ups so references stay intact
+  let touched=0;
+  store.lanes.forEach(l=>{ if(l.owner===oldName){ l.owner=name; touched++; } });
+  store.fus.forEach(f=>{ if(f.owner===oldName){ f.owner=name; touched++; } });
+  await saveOwners(); await saveLanes(); await saveFus();
+  renderOwnerTable(); refreshOwnerList(); refreshLaneDependents();
+  if($("#view-followups").classList.contains("active")) renderFus();
+  toast(touched?`Renamed — updated ${touched} reference${touched>1?"s":""}`:"Owner renamed");
+}
+async function removeOwner(name){
+  const laneCount=store.lanes.filter(l=>l.owner===name).length;
+  const fuCount=store.fus.filter(f=>f.owner===name).length;
+  let extra="";
+  if(laneCount||fuCount){
+    const bits=[];
+    if(laneCount) bits.push(`${laneCount} lane${laneCount>1?"s":""}`);
+    if(fuCount) bits.push(`${fuCount} follow-up${fuCount>1?"s":""}`);
+    extra=`\n\n${name} is assigned to ${bits.join(" and ")}. Removing the name from the roster leaves those assignments as-is (the name stays on them); it just won't appear in the picker going forward.`;
+  }
+  if(!confirm(`Remove "${name}" from the owner list?${extra}`)) return;
+  store.owners=store.owners.filter(o=>o!==name);
+  await saveOwners();
+  renderOwnerTable(); refreshOwnerList();
+  toast("Owner removed");
+}
+$("#resetOwners") && ($("#resetOwners").onclick=async ()=>{
+  if(!confirm("Reset the owner list back to the original roster? Assignments already made on lanes and follow-ups are not changed.")) return;
+  store.owners=[...DEFAULT_OWNERS]; await saveOwners();
+  renderOwnerTable(); refreshOwnerList();
+  toast("Owner list reset");
+});
+
+/* ---------- inline lane-owner edit on brief cards ---------- */
+function ownerOptionsHTML(selected){
+  let html=`<option value="">— Unassigned —</option>`;
+  const list=sortedOwners();
+  // include current value even if not in roster, so it isn't silently dropped
+  if(selected && !list.some(o=>o===selected)) html+=`<option value="${escapeHtml(selected)}" selected>${escapeHtml(selected)} (not in roster)</option>`;
+  list.forEach(o=>{ html+=`<option value="${escapeHtml(o)}"${o===selected?" selected":""}>${escapeHtml(o)}</option>`; });
+  return html;
+}
+async function setLaneOwner(laneId, owner){
+  const L=store.lanes.find(x=>x.id===laneId); if(!L) return;
+  L.owner=owner; await saveLanes();
+  if($("#view-lanes").classList.contains("active")) renderLaneTable();
+}
+
+/* ---------- init ---------- */
+(async function(){
+  initRTs();
+  await load();
+  $("#opDate").value=todayISO();
+  loadDay(todayISO());
+  refreshOwnerList();
+  renderCatFilters(); fillCatSelect(); fuStats();
+})();
+</script>
+</body>
+</html>
