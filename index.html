@@ -708,6 +708,7 @@ async function load(){
   await seedDebrief0625();
   await seedBrief0626();
   await seedDebrief0626();
+  await seedBrief0627();
   await seedFollowups();
 }
 
@@ -1076,6 +1077,60 @@ async function seedDebrief0626(){
   if(!store.days[iso].pm) store.days[iso].pm={net:"",lanes:{}};
   store.days[iso].pm.net=pmNet;
   store.days[iso].pm.lanes=pmLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  await saveDays(iso);
+}
+
+/* One-time seed: 6/27 morning brief from the Operations Status, Driver Scheduling,
+   AS/400 Comm Data Issue & Trailer Network Updates call. Applied only if 6/27 AM is empty. */
+async function seedBrief0627(){
+  const iso="2026-06-27";
+  const existing=store.days[iso];
+  const amHasContent = existing && existing.am &&
+    (stripHtml(existing.am.net||"").trim() || Object.values(existing.am.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(amHasContent) return;
+
+  const amLanes={
+    cc147:`<p><b>Regina — California/Texas: full departs, all green, all on time.</b> Full on freight through the 3rd. All trucks out of the shops/complete except one still to pick up in California.</p>
+<p><b>Flag — AS/400 comm data issue:</b> AS/400 is not updating comm data. Having to go in and manually update the trip number the truck is on — and for expedited, update the truck number too. Some proximity issues as well. Regina helping cover it today; a few others can do it too. Raised for awareness.</p>`,
+
+    cc151:`<p><b>Sarah — 6 of 8 departs.</b> One truck delayed to Kansas City — a big wreck has traffic at a standstill (trailer covering the whole highway); she'll be late getting back. Waiting to see roll time and whether the load needs to be handled differently.</p>
+<ul>
+<li>Hours: may use the accident exception if needed. If she rolls by ~9, that's KC ~noon, leaving ~4 hrs back to Oklahoma — possibly an hour late for the PM depart, but the other driver still has plenty of time in the 12-hour window. Not super concerned yet; depends on when she gets moving (clearer by ~10 AM).</li>
+<li>Working through a couple of freight issues. PMs look okay; one possible sub-out.</li>
+<li>Status note: the "equipment yellow" is really traffic, not equipment — should be marked "other."</li>
+</ul>`,
+
+    cc149:`<p><b>Lacey — Bedford: 5 of 8 departs, one expedited fill-in.</b> A driver called out last night — got a flat on his personal vehicle, the jack fell on him while changing it; he called well over two hours after depart time asking whether to come in, so he wasn't brought in. (Not a frequent caller-out.)</p>
+<p><b>Open positions:</b> Using four drivers for local pickups and final-mile deliveries.</p>`,
+
+    cc154:`<p><b>Lacey — Carlisle: rough — 3 of 8 departs, one OTR fill-in.</b> Weekends are worse than weekdays for the open positions since they're mostly Friday–Monday, and fill-ins are hard to find on weekend days.</p>`,
+
+    cc148:`<p><b>Allen — 148 into North Carolina: two OTR fill-ins.</b> Still looking for a driver for the 1800 shift tonight — checking Indy drivers and called out to all expedited drivers (no response yet). OTR outreach is the next step (pulling from KC, PA, and all lanes to fill). Everything else looks full to run once drivers are filled in.</p>`,
+
+    cc152:`<p><b>Brian (covering for Josh) — 152 KC to ND: 6 of 8 rolling this morning.</b> One didn't depart (open shift); one is doing local work in KC (picking up/delivering loads, dropping at the yard). Looking to run all eight this afternoon.</p>
+<ul>
+<li>Two late starts this morning from yesterday's HOS; an additional later start this afternoon (Josh started late yesterday, so he starts late again today). All eight still look to run.</li>
+<li>Everything's at the yard except two ND → Kansas/Edgerton loads out of Gatorade — said to be past DDT but weren't confirmed ready this morning; Brian to confirm.</li>
+<li>Still need freight out of Kansas City to Indy; working to fill the week.</li>
+</ul>
+<p><b>Turnover watch (Kristi):</b> Inconsistent daily start times are a reported turnover driver in this group (per the driver-experience team's calls). Digging into how to fix it; for now, reinforce expectations and stay on schedule as much as possible. Brian notes this lane doesn't usually have the issue — it's newer, with a lot of newer drivers added.</p>`
+  };
+
+  const amNet=`<p><b>Source:</b> 06/27 Morning Brief — Operations Status, Driver Scheduling, AS/400 Comm Data Issue &amp; Trailer Network Updates.</p>
+<p><b>Tool walkthrough (Kristi):</b> Walked the group through this brief/debrief site — top of each day holds the highest-level items, with the rest below showing what happened through the week; you can page back through every day's AM and PM briefs (first one was Wed afternoon). Follow-ups are being added — both call follow-ups and broader-group items — so everyone can see what's in motion; once an action item is done it moves to Archive, and archived items roll into History. Daily debriefs page is next so leaders can enter their own info in one spot.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>AS/400 comm data issue:</b> AS/400 not updating comm data — manual trip-number (and truck-number for expedited) updates required, plus proximity issues. Regina and a few others covering today. (Will feed back into AS/400 soon but isn't yet.)</li>
+<li><b>Expedited SharePoint page (WIP):</b> A centralized expedited page under the Operations home — links, frequently-used tools, and an OTR pay-comparison tool (sliding pay scale) that helped win over an OTR driver who'd declined an expedited load over pay. Send Kristi your frequently-used links to add; request access if you don't have it (Regina requested).</li>
+<li><b>Trailer network / pools updated (yesterday):</b> Pulls live from both telematics devices (not just AS/400, which isn't 100% correct yet). Drill into a yard to see trailers and status — e.g. Sapulpa shows 5 available, Denton 8. A shared-pool view shows loaded / available / dispatched by geofence. Report any errors to Kristi (can get more views built with Christine). Kristi on-site with the next team sometime next week.</li>
+<li><b>Stale trailer hunt:</b> One trailer at Sapulpa reads 421 days — last real contact 2/13 (last ran Belvedere → Henderson); pings but hasn't been seen on the yard. Regina to go look for it once the rain stops and report back this afternoon, before it rolls onto the lost-trailer report.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
+  store.days[iso].am.net=amNet;
+  store.days[iso].am.lanes=amLanes;
   store.days[iso].savedAt=new Date().toISOString();
   await saveDays(iso);
 }
