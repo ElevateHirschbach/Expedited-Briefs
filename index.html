@@ -709,6 +709,7 @@ async function load(){
   await seedBrief0626();
   await seedDebrief0626();
   await seedBrief0627();
+  await seedDebrief0627();
   await seedFollowups();
 }
 
@@ -716,7 +717,7 @@ async function load(){
    once (tracked by a stable id), so it won't duplicate or resurrect if deleted
    after the flag is set. */
 async function seedFollowups(){
-  const FLAG="exp_seed_fu_0626_v1";
+  const FLAG="exp_seed_fu_v2"; // bump when adding new seeded action items; per-id de-dup prevents duplicates
   let already=false;
   try{ already = !!localStorage.getItem(FLAG); }catch(e){}
   if(already) return;
@@ -724,7 +725,9 @@ async function seedFollowups(){
     { id:"seed_fu_recruiting_0626", date:"2026-06-26", due:"2026-06-26", cat:"Planning",
       owner:"Kristi Noland", action:"Add recruiting to this call daily.", notes:"", done:false, compNotes:"" },
     { id:"seed_fu_ro_320832_0626", date:"2026-06-26", due:"2026-06-26", cat:"Maintenance",
-      owner:"Lyndi Curry", action:"Research truck 320832 — has no RO created but is in S status.", notes:"", done:false, compNotes:"" }
+      owner:"Lyndi Curry", action:"Research truck 320832 — has no RO created but is in S status.", notes:"", done:false, compNotes:"" },
+    { id:"seed_fu_indy_monday_0627", date:"2026-06-27", due:"2026-06-29", cat:"Planning",
+      owner:"Kristi Noland", action:"Meet Monday to figure out options for the Indianapolis driver shortage.", notes:"<p>With John and Lyndi. Indy is the week's pain point — Friday firings left open holes and no swap partner; hoping last week's orientation grads help, and build a plan if not.</p>", done:false, compNotes:"" }
   ];
   let added=0;
   seedItems.forEach(it=>{
@@ -1131,6 +1134,66 @@ async function seedBrief0627(){
   if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
   store.days[iso].am.net=amNet;
   store.days[iso].am.lanes=amLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  await saveDays(iso);
+}
+
+/* One-time seed: 6/27 afternoon debrief from the Fleet Operations, Driver Shortages
+   & Load Management call. Applied only if 6/27 PM is empty. */
+async function seedDebrief0627(){
+  const iso="2026-06-27";
+  const existing=store.days[iso];
+  const pmHasContent = existing && existing.pm &&
+    (stripHtml(existing.pm.net||"").trim() || Object.values(existing.pm.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(pmHasContent) return;
+
+  const pmLanes={
+    cc152:`<p><b>Ryan — 152 KC to ND.</b> Running all 8 this afternoon (everybody out; 6 of 8 loaded and rolling, one picking up from the shipper). Tomorrow PM looks back to normal — all 8 planned, everything tracking.</p>
+<p><b>Tomorrow AM is rough — only 2 of 8:</b></p>
+<ul>
+<li>Three Indy holes in the morning: the driver who hit the pole in Indy and another who walked off last week (no contact after several days) were both fired Friday but not pulled out — loads still sit in their holes. The third is a regular opening.</li>
+<li>Replacement (ALKAM) starts Monday and is on a reset tomorrow, so that hole stays open tomorrow. Root issue: one area has no Indy drivers and nobody to swap with (Casey has drivers but no swap partner).</li>
+<li>A truck broke down this afternoon in Bridgeton (sitting at the Loves) — sending someone to retrieve it. Moving hot loads around; short on trucks for tomorrow morning.</li>
+</ul>
+<p><b>Commitment:</b> Get the firings' open holes and loads squared away. Hasn't been able to reach OTR in Indy (tied up on KC problems + the breakdown).</p>`,
+
+    cc148:`<p><b>Allen — 148 into North Carolina.</b> Borrowed an Indy driver (they helped out); using three North Carolina drivers as PM fill-ins for holes in orientation. Everything plugged in as full as possible for AM and PM.</p>
+<ul>
+<li>Tonight: 3 OTR fill-ins to keep rolling. Tomorrow: 1 OTR fill-in in the AM, and one shift intentionally left unfilled (no Indy or NC driver) rather than keep struggling — Sunday is switchover, so drivers need full hours to run Monday.</li>
+<li>Was playing catch-up on loads not making the yard (notes updated late). Sunday filled with full loads; working to fill Monday for a clean handoff. Week looks solid; watching whether Pepsi gives more to fill gaps.</li>
+</ul>`,
+
+    cc149:`<p><b>Lacey — Bedford: 5 of 8 departs.</b> One on local pickups (three loads, in Greenfield). Tomorrow AM: 3 of 4 departs. Gave back some loads that wouldn't make on time due to driver shortage.</p>
+<p><b>Win:</b> Chris (NE planner) worked expedited on these lanes with her today — together they found 3–4 undropped loads and talked an OTR driver into taking them the whole way (backed him up for home time).</p>`,
+
+    cc154:`<p><b>Lacey — Carlisle: 3 of 8 departs today</b> — mostly open shifts (one driver moving, one gal had PTO requested before we got this short-staffed). One driver filled in on the NC lane for local NE deliveries. Tomorrow: full AM depart on this lane.</p>`,
+
+    cc151:`<p><b>Sarah — 6 of 8 departs.</b> Late truck back from the 4 AM shift — a domino effect: heavy traffic from a semi sliding and covering all lanes (wrecker needed), then an unfamiliar Lenexa drop (talked her through it), then held up waiting on a train. PM driver aware — ~2-hour late start, but he's going to Denton (shorter/easier than Kansas), so it should straighten out.</p>
+<ul>
+<li>Another KC load won't make the yard: the Illinois (newer) driver overslept (~10–10:30), was blocked in by another trailer, then hit a multi-vehicle accident with rescue vehicles for a couple hours. Oversleeping alone wouldn't have mattered — the accident was the real delay. Covering with a different load; moved that one to the AM depart.</li>
+<li><b>Action:</b> Need an OTR truck on the Denton AM-depart load tomorrow morning — Sarah will be in to make sure it delivers on time (due a couple hours after arrival).</li>
+</ul>`,
+
+    cc147:`<p><b>Regina — California/Texas: all green (second day running), full on parts, loads on time.</b></p>
+<ul>
+<li><b>Save:</b> Rescued a Walmart load on OTR that wasn't going to make on-time delivery (driver error) — swapped it out in Tucson, gave that driver another load to Temple with an extra day, and has a driver staging in Merkel tonight to get the load to Temple by 10 AM.</li>
+<li><b>Waco Coke load:</b> Checking statuses, found a 10 AM Waco Coke load where the driver's trailer was rejected at the shipper (washout left an odor) — nothing relayed to the planner. Got with Alexis, put another truck on it (pre-plan accepted); it'll be a work-in at Waco after a required break. Posted in the Coke chat — as long as we have it by 10 AM tomorrow, still makes on-time delivery. Davy to watch it tonight; noted in night notes. If stuck at the shipper, can juggle loads to still run full depart but the Coke load would reschedule.</li>
+</ul>`
+  };
+
+  const pmNet=`<p><b>Source:</b> 06/27 Afternoon Debrief — Fleet Operations, Driver Shortages &amp; Load Management.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Indianapolis driver shortage is the week's Achilles' heel.</b> Friday firings (incl. the Indy pole-strike driver and a walk-off) left open holes with loads still sitting in them; one area has no Indy drivers and no swap partner. Every lane has been borrowing Indy drivers to help. Tomorrow AM is especially thin on 152.</li>
+<li><b>Mutual aid:</b> Regina and Sarah to reach out to Brian/Ryan and help cover the outliers — especially the tough Indy piece — where they can.</li>
+<li><b>Monday plan:</b> Hoping last week's orientation grads ease the Indianapolis pain starting Monday; if not, Kristi, John &amp; Lyndi to meet and build a plan. (Logged as a follow-up.)</li>
+<li><b>Switchover:</b> Sunday is the driver switchover — protect full hours so drivers can run Monday (drove Allen's choice to leave one shift unfilled).</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].pm) store.days[iso].pm={net:"",lanes:{}};
+  store.days[iso].pm.net=pmNet;
+  store.days[iso].pm.lanes=pmLanes;
   store.days[iso].savedAt=new Date().toISOString();
   await saveDays(iso);
 }
