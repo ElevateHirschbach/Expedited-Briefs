@@ -714,6 +714,7 @@ async function load(){
   await seedBrief0628();
   await patchRecruitingBullet0628();
   await patchAledo0628();
+  await seedDebrief0628();
   await seedFollowups();
 }
 
@@ -721,7 +722,7 @@ async function load(){
    once (tracked by a stable id), so it won't duplicate or resurrect if deleted
    after the flag is set. */
 async function seedFollowups(){
-  const FLAG="exp_seed_fu_v3"; // bump when adding new seeded action items; per-id de-dup prevents duplicates
+  const FLAG="exp_seed_fu_v4"; // bump when adding new seeded action items; per-id de-dup prevents duplicates
   let already=false;
   try{ already = !!localStorage.getItem(FLAG); }catch(e){}
   if(already) return;
@@ -735,7 +736,9 @@ async function seedFollowups(){
     { id:"seed_fu_aurora_elpaso_0628", date:"2026-06-28", due:"2026-06-29", cat:"Equipment",
       owner:"Sean Moser", action:"Follow up with Richard on Aurora El Paso short-staffing causing 12-hr load delays.", notes:"<p>Aurora is short-staffed on the El Paso leg, causing ~12-hour delays on loads sitting there and late deliveries. Sean meets Aurora and Richard weekly; Richard reaching out to his Aurora contacts. Logged so the follow-up isn't dropped.</p>", done:false, compNotes:"" },
     { id:"seed_fu_indy_recruiting_0628", date:"2026-06-28", due:"2026-06-29", cat:"Planning",
-      owner:"Kristi Noland", action:"Follow up on Indianapolis recruiting — message, pay comp, and wording.", notes:"<p>Define the recruiting message for the expedited role, run a pay comparison to confirm we're in range (check for a competitor overpaying), and review how the role is worded/sold (home daily, set hours, drop-and-hook, days off, bonuses). Also check whether OTR has the same Indy hiring issues. Part of Monday's circle-up.</p>", done:false, compNotes:"" }
+      owner:"Kristi Noland", action:"Follow up on Indianapolis recruiting — message, pay comp, and wording.", notes:"<p>Define the recruiting message for the expedited role, run a pay comparison to confirm we're in range (check for a competitor overpaying), and review how the role is worded/sold (home daily, set hours, drop-and-hook, days off, bonuses). Also check whether OTR has the same Indy hiring issues. Part of Monday's circle-up.</p>", done:false, compNotes:"" },
+    { id:"seed_fu_timeoff_process_0628", date:"2026-06-28", due:"2026-06-30", cat:"Planning",
+      owner:"Kristi Noland", action:"Establish a trackable time-off / PTO procedure.", notes:"<p>Vacation still on the sheet (152) exposed that PTO lives on a spreadsheet column rather than a tracked, approvable system — not chronological, not consistently taught, approved time-off not reliably pulled from the schedule. Has happened on more than one lane. Build a real procedure; drivers still submit the PTO macro for the record.</p>", done:false, compNotes:"" }
   ];
   let added=0;
   seedItems.forEach(it=>{
@@ -1264,6 +1267,61 @@ async function seedBrief0628(){
   if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
   store.days[iso].am.net=amNet;
   store.days[iso].am.lanes=amLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  await saveDays(iso);
+}
+
+/* One-time seed: 6/28 afternoon debrief — Driver Scheduling, Equipment Failures
+   & Process Improvements. Applied only if 6/28 PM is empty. */
+async function seedDebrief0628(){
+  const iso="2026-06-28";
+  const existing=store.days[iso];
+  const pmHasContent = existing && existing.pm &&
+    (stripHtml(existing.pm.net||"").trim() || Object.values(existing.pm.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(pmHasContent) return;
+
+  const pmLanes={
+    cc152:`<p><b>Brian — 152 KC to Indy: rough afternoon.</b></p>
+<ul>
+<li>A driver was still on the sheet despite having vacation (3 days) — the time-off email went to Josh and was never passed on. Had to scramble to fill the holes. Second time this has happened in three weeks.</li>
+<li>Another Indy driver waited until shift time, then sent a nasty "I quit" message.</li>
+<li>Result: 6 of 8 running in the morning (was going to be 4); 4 of 8 this afternoon (was planned all 8). Has a fill for tomorrow morning; working the Saturday hole.</li>
+</ul>
+<p><b>Time-off process gap:</b> Current practice is to note PTO on the far-left column of the main load spreadsheet (Allen/Bonnie review weekly; drivers also submit the PTO macro so it's viewable, but it's not entered in the AS/400). It isn't chronological, isn't always taught to newer planners, and approved time-off isn't reliably pulled off the schedule. Group agreed it needs a real, trackable procedure — Kristi taking it as an action item.</p>
+<p><b>MGIN (Kristi):</b> We need a better process for this shipper. These loads are so easy and good, but we need communication on what is loaded and what is not. I also have an idea for these loads so we can keep our pickups on time and keep them full of MTs. That said, we can't get a hold of them for anything on the weekends.</p>`,
+
+    cc148:`<p><b>Allen — 148 into North Carolina.</b> Shuffling around the Indy-driver issues (loads crossing past the next lane affect everyone) — shout-out to the team for communication and keeping everyone informed. One complete PM shift went unfilled tonight (open positions); everything else ran full (10 drivers tonight). Tomorrow AM full with one OTR fill-in.</p>
+<p><b>Tomorrow PM:</b> Three openings — Rose going down to fill one (needs her break first), plus two North Carolina drivers Allen is trying to line up (work schedules / HOS very tight; messages out to the two who are available).</p>`,
+
+    cc149:`<p><b>Casey/Lacey — Bedford: 6 of 8.</b> A complete depart got shuffled over to the other lane after many rounds of rearranging. 3 of 4 departures tomorrow morning.</p>`,
+
+    cc154:`<p><b>Casey/Lacey — Carlisle: 7 of 8</b> (thought it would be full, but a depart was shuffled to the other lane). 3 of 4 departures tomorrow morning.</p>`,
+
+    cc151:`<p><b>Sarah — 6 of 8 departs;</b> the two unfilled shifts are waiting on orientation drivers. One ~30-minute late start (KC driver held up at a fuel island whose system was down — no receipts) — won't impact the lane. PMs are at the yard or set to drop by the time drivers reach Denton/Kansas.</p>
+<p><b>Freight:</b> Plenty booked, with a good amount set aside to fill in — in good shape. Note to self: catch up on Lytx events before end of day.</p>`,
+
+    cc147:`<p><b>Regina — rough day on 147, but stayed full on parts.</b></p>
+<ul>
+<li>Morning load had to be transloaded (landing-gear issue).</li>
+<li>Another trailer going back to Sunnyvale: the local that picked it up had back-top damage with non-working marker lights that couldn't be repaired (front three markers also out). Towed since 8 AM; tech finally arrived 2 PM, now repaired. A Merkel-yard trailer (Harrisonville load) is coming back to Denton with a tech on site — back ~6 AM, still on time.</li>
+<li><b>Pre-trip failure:</b> The damaged trailer was picked up by the local at 1 AM in the dark — the missing marker lights are a basic pre-trip catch that clearly wasn't done. Driver was Darryl Berg (5154). Regina shared photos with Justin; leadership wants the driver conversation about pre-trip being a requirement.</li>
+<li><b>Fresh Pet load:</b> The Sunnyvale rework didn't get back before the shipper closed (1 PM) — CSR aware, will reschedule; likely a hit on us plus a transload charge. Local to be back by 10 PM; departs on the 5 AM tomorrow.</li>
+<li><b>Equipment yellow:</b> Truck 360634 with road assist heading back to Tucson — intermittent ABS light.</li>
+</ul>`
+  };
+
+  const pmNet=`<p><b>Source:</b> 06/28 Afternoon Debrief — Driver Scheduling, Equipment Failures &amp; Process Improvements.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Trackable time-off / PTO procedure (action item):</b> The vacation-still-on-the-sheet miss on 152 exposed that time-off lives on a spreadsheet column rather than a tracked, approvable system — not chronological, not consistently taught, and approved PTO isn't reliably pulled from the schedule. It's happened on more than one lane. Kristi to establish an actual trackable procedure (drivers still submit the PTO macro for the record). Not fair to leave on any one person.</li>
+<li><b>Pre-trip enforcement:</b> The 147 damaged trailer (Darryl Berg, 5154) had clearly missing marker lights a basic pre-trip would have caught — picked up at 1 AM in the dark. Need to identify the driver and reinforce that pre-trip (including the light test) is a requirement. Photos shared with Justin.</li>
+<li><b>Indy ripple effect:</b> Indianapolis driver shortages keep rippling across lanes (loads crossing past the next lane), driving cross-lane shuffling all weekend — strong teamwork called out for keeping everyone informed.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].pm) store.days[iso].pm={net:"",lanes:{}};
+  store.days[iso].pm.net=pmNet;
+  store.days[iso].pm.lanes=pmLanes;
   store.days[iso].savedAt=new Date().toISOString();
   await saveDays(iso);
 }
