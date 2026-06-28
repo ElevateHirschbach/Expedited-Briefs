@@ -595,13 +595,13 @@ const DEFAULT_CATS = ["Maintenance","Driver","Equipment","Planning","Loads"];
 
 /* Lanes from the Daily Tracker. Each gets its own notes section per phase. */
 const DEFAULT_LANES = [
-  {id:"cc152", cc:"152", lane:"Indianapolis, IN ↔ Kansas City, KS", owner:"Bryan Ryder"},
-  {id:"cc148", cc:"148", lane:"Indianapolis, IN ↔ Mount Airy, NC", owner:"Allen Allday"},
-  {id:"cc154", cc:"154", lane:"Indianapolis, IN ↔ Carlisle, PA", owner:"Lacey Curry"},
-  {id:"cc149", cc:"149", lane:"Indianapolis, IN ↔ Bedford, PA", owner:"Lacey Curry"},
-  {id:"cc151", cc:"151", lane:"Sapulpa, OK (Hub) ↔ Kansas City ↔ Denton, TX", owner:"Sara Weltz"},
-  {id:"cc147", cc:"147", lane:"Aledo, TX ↔ San Bernardino, CA", owner:"Regina Henson"},
-  {id:"cc135", cc:"135", lane:"AZ ↔ TX (Aurora)", owner:"Sean Moser"},
+  {id:"cc135", cc:"135", lane:"Aurora", owner:"Sean Moser"},
+  {id:"cc152", cc:"152", lane:"Indianapolis, IN – Kansas City, KS", owner:"Bryan Ryder"},
+  {id:"cc148", cc:"148", lane:"Indianapolis, IN – Mount Airy, NC", owner:"Allen Allday"},
+  {id:"cc149", cc:"149", lane:"Indianapolis, IN – Bedford, PA", owner:"Lacey Curry"},
+  {id:"cc154", cc:"154", lane:"Indianapolis, IN – Carlisle, PA", owner:"Lacey Curry"},
+  {id:"cc151", cc:"151", lane:"Sapulpa, OK – Kansas City, KS  /  Sapulpa, OK – Denton, TX", owner:"Sara Weltz"},
+  {id:"cc147", cc:"147", lane:"Aledo, TX – San Bernardino, CA", owner:"Regina Henson", owners:["Regina Henson","Tyler Romine"]},
 ];
 /* Prompts shown inside each lane card, per phase */
 const PHASE_PROMPTS = {
@@ -703,6 +703,7 @@ async function load(){
   try{
     const o = await DB.get(K_OWNERS); if(o){ const arr=JSON.parse(o.value); if(Array.isArray(arr)) store.owners=arr; }
   }catch(e){}
+  await refreshLaneLabels0628();
   await seedDebrief0624();
   await seedBrief0625();
   await seedDebrief0625();
@@ -710,6 +711,9 @@ async function load(){
   await seedDebrief0626();
   await seedBrief0627();
   await seedDebrief0627();
+  await seedBrief0628();
+  await patchRecruitingBullet0628();
+  await patchAledo0628();
   await seedFollowups();
 }
 
@@ -717,7 +721,7 @@ async function load(){
    once (tracked by a stable id), so it won't duplicate or resurrect if deleted
    after the flag is set. */
 async function seedFollowups(){
-  const FLAG="exp_seed_fu_v2"; // bump when adding new seeded action items; per-id de-dup prevents duplicates
+  const FLAG="exp_seed_fu_v3"; // bump when adding new seeded action items; per-id de-dup prevents duplicates
   let already=false;
   try{ already = !!localStorage.getItem(FLAG); }catch(e){}
   if(already) return;
@@ -727,7 +731,11 @@ async function seedFollowups(){
     { id:"seed_fu_ro_320832_0626", date:"2026-06-26", due:"2026-06-26", cat:"Maintenance",
       owner:"Lyndi Curry", action:"Research truck 320832 — has no RO created but is in S status.", notes:"", done:false, compNotes:"" },
     { id:"seed_fu_indy_monday_0627", date:"2026-06-27", due:"2026-06-29", cat:"Planning",
-      owner:"Kristi Noland", action:"Meet Monday to figure out options for the Indianapolis driver shortage.", notes:"<p>With John and Lyndi. Indy is the week's pain point — Friday firings left open holes and no swap partner; hoping last week's orientation grads help, and build a plan if not.</p>", done:false, compNotes:"" }
+      owner:"Kristi Noland", action:"Meet Monday to figure out options for the Indianapolis driver shortage.", notes:"<p>With John and Lyndi. Indy is the week's pain point — Friday firings left open holes and no swap partner; hoping last week's orientation grads help, and build a plan if not.</p>", done:false, compNotes:"" },
+    { id:"seed_fu_aurora_elpaso_0628", date:"2026-06-28", due:"2026-06-29", cat:"Equipment",
+      owner:"Sean Moser", action:"Follow up with Richard on Aurora El Paso short-staffing causing 12-hr load delays.", notes:"<p>Aurora is short-staffed on the El Paso leg, causing ~12-hour delays on loads sitting there and late deliveries. Sean meets Aurora and Richard weekly; Richard reaching out to his Aurora contacts. Logged so the follow-up isn't dropped.</p>", done:false, compNotes:"" },
+    { id:"seed_fu_indy_recruiting_0628", date:"2026-06-28", due:"2026-06-29", cat:"Planning",
+      owner:"Kristi Noland", action:"Follow up on Indianapolis recruiting — message, pay comp, and wording.", notes:"<p>Define the recruiting message for the expedited role, run a pay comparison to confirm we're in range (check for a competitor overpaying), and review how the role is worded/sold (home daily, set hours, drop-and-hook, days off, bonuses). Also check whether OTR has the same Indy hiring issues. Part of Monday's circle-up.</p>", done:false, compNotes:"" }
   ];
   let added=0;
   seedItems.forEach(it=>{
@@ -1197,6 +1205,68 @@ async function seedDebrief0627(){
   store.days[iso].savedAt=new Date().toISOString();
   await saveDays(iso);
 }
+
+/* One-time seed: 6/28 (Sat) weekly/morning brief — Weekend Coverage, Equipment
+   Issues & Staffing. Applied only if 6/28 AM is empty. */
+async function seedBrief0628(){
+  const iso="2026-06-28";
+  const existing=store.days[iso];
+  const amHasContent = existing && existing.am &&
+    (stripHtml(existing.am.net||"").trim() || Object.values(existing.am.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(amHasContent) return;
+
+  const amLanes={
+    cc147:`<p><b>Regina — California/Texas: still full on departs.</b></p>
+<ul>
+<li><b>Aledo landing-gear trailer:</b> A trailer dropped at Aledo had landing-gear issues; local driver (32574) took it to the Denton yard overnight to grease it. In daylight the expedited driver flagged it as not roadworthy for expedited (too many drops). Tried to transload at the shipper but they refused (already picked up), so dropped at Gander Road and moved it back to OTR — OK to run OTR since it's a live unload (trailer stays hooked). Planner getting a truck on it.</li>
+<li><b>Coverage:</b> Picked up one of Sean's Aurora loads that wasn't going to make the AM depart on time, running it this afternoon in place — still full on depart.</li>
+<li><b>Unscaled OTR drops:</b> Yesterday some loads picked up by OTR for expedited weren't scaled (luckily scaled out OK) — lease operators aren't scaling because they're not hauling and would pay the scale fee out of pocket. Raised to Justin and Scott; Justin likely starting an email chain. Common out of Texas where OTR drops at the Aledo yard for us.</li>
+<li><b>Another Aledo trailer problem:</b> OTR-picked trailer with top damage and no marker lights.</li>
+</ul>`,
+
+    cc151:`<p><b>Sarah — 6 of 8 departs, one OTR fill-in</b> (let us run another lane). One new hire on a ride-along this morning; lanes on time; PM loads in good shape (watching one Texas).</p>
+<ul>
+<li><b>Open positions:</b> Four drivers haven't started — mostly weekend shifts (a Fri–Mon 4 AM, plus a 2 PM, 4 PM, and 4 AM). One OTR-to-expedited driver can't start until the 7th. Prefers an OTR fill-in to run a lane rather than keep a driver local doing nothing (little local work in Oklahoma).</li>
+<li><b>Pre-positioning idea (from Kristi):</b> Since Sapulpa↔KC and Sapulpa↔Denton aren't live-load meet-ups, bring loads up to sit on the Sapulpa yard ready to go — doable if the planner has driver coverage (sometimes tight).</li>
+<li><b>Pipeline:</b> Two new hires pending the 29th (likely available first week of July after orientation + ride-along). Already have a backfill for the driver who termed Friday (family emergency in Texas). A couple more starts near the 8th. Hoping this is the last week running only six days.</li>
+</ul>`,
+
+    cc149:`<p><b>Lacey — Bedford: 6 of 8 departs today, open positions.</b> The two open positions are split, one on each side.</p>`,
+
+    cc154:`<p><b>Lacey — Carlisle: full depart.</b> Three expedited fill-ins (two borrowed from other lanes). Using the PA OTR fill-in (his own truck) across lanes — picking up Hazleton → Auburn, then can move to the Indy side to help between lanes for a couple of days.</p>`,
+
+    cc148:`<p><b>Allen — 148 into North Carolina: AM call-out caused a no-depart.</b> Still needs four loads for tomorrow (worked with NC planners; cancellations moved forward and bottlenecked to tomorrow).</p>
+<ul>
+<li><b>Five open driver positions</b> (including last night's call-out who said he quit): 2 Indy, 3 North Carolina.</li>
+<li>One rehire coming to orientation, starting Fri–Mon weekend shift — may help once cleared. Rose/Rosaline (expedited driver 360385, lives in the truck) taking a load all the way to North Carolina tonight to stage and help fill spots.</li>
+</ul>`,
+
+    cc152:`<p><b>Brian — 152 KC to ND: 2 of 8 this morning</b> (three open shifts out of ND). KC drivers doing local work; full 8 of 8 this afternoon, everything at the yard. Open shifts ease Mon/Tue (two Indy AM tomorrow, one Tuesday, then ~one a day until the weekend).</p>
+<p><b>Weekend "musical loads":</b> Opposite problem from Josh — too many loads, not enough drivers, so he creates local KC work so drivers aren't sitting home paid. The "hustler" experiment (go pick up our own loads instead of waiting on OTR) could've used three drivers this morning. OTR fill-ins on our runs cost us more money — open question whether it's better to not run or pay them. Most KC-area basket freight is within 100–150 mi; first-mile freight is running 150–200+, which is the gap to fill with more localized freight.</p>`,
+
+    cc135:`<p><b>Sean — Aurora: planning 7 of 8.</b> The missing one is the load given to Regina (wasn't going to make the AM depart; better to run on our asset than Aurora's).</p>
+<p><b>El Paso / Aurora staffing (recurring thorn):</b> Aurora is short-staffed on the El Paso leg, causing 12-hour delays on loads sitting there — we'll be late on a few, with little leeway given. Sean talked to Richard this morning; Richard will reach out to his Aurora contacts. Sean meets Aurora weekly and Richard weekly to keep collaborating. <i>(Logged as a follow-up.)</i></p>
+<p><b>Regional-driver coaching:</b> All regional drivers (NE/SE/Midwest/Texas, minus a few West Coast) fall under Sean — send him any regional drivers not leaving scale tickets / not doing drop procedures so the DLs can coach them.</p>
+<p><b>End-of-trip checklist (in pipeline):</b> A drop checklist (scale ticket, full fuel, etc.) drivers complete at end of trip — existed before the changeover and got removed; team wants it restored, especially for meat-plant loads over 40k lbs.</p>`
+  };
+
+  const amNet=`<p><b>Source:</b> 06/28 Weekly/Morning Brief — Weekend Coverage, Equipment Issues &amp; Staffing.</p>
+<p><b>Headline:</b> Most lanes would have been green across the board if not for the Indianapolis driver shortage — the weekend's defining challenge.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Indianapolis recruiting deep-dive (Monday circle-up):</b> Discussion on why expedited has trouble hiring in Indy when OTR seemingly can (OTR had 6–7 in orientation vs. 0 expedited/dedicated). Action: follow up on recruiting specifically in Indy — define the message, run a pay comp vs. competitors, and review how the role is being worded/sold (home daily, set hours, drop-and-hook, two days off, bonuses to offset pay). Expedited should be an attractive role to a driver who wants to be home more. We can't continue to have these gaps on weekends in Indianapolis.</li>
+<li><b>Weekend coverage:</b> Indy openings are mostly Fri–Mon, so weekends are hardest; lanes are borrowing drivers across the network and leaning on OTR fill-ins (which cost more). Finding fill-ins is hugely time-consuming ("three nos before a yes").</li>
+<li><b>OTR perception of expedited:</b> Negative perception among OTR drivers who drop for us and don't continue the miles, plus short-load dwell (waiting 12–14 hrs for the next load). Selling points: sliding-scale pay (new calculator), drop-and-hook, home time — but messaging from driver leaders needs to improve, and the real fix is more localized first-mile freight (currently 150–200+ mi vs. the ideal 100–150).</li>
+<li><b>Scale tickets / end-of-trip checklist:</b> OTR/lease drivers dropping for expedited often aren't leaving scale tickets (won't pay the fee). Justin likely starting an email chain. Sean owns regional-driver coaching. A drop checklist (scale ticket, full fuel, etc.) is back in the pipeline — team wants the pre-changeover version restored.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
+  store.days[iso].am.net=amNet;
+  store.days[iso].am.lanes=amLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  await saveDays(iso);
+}
 async function saveDays(iso){
   // Save one day per key so writes stay small. Defaults to the current operating day.
   const target = iso || curDate;
@@ -1208,6 +1278,73 @@ async function saveDays(iso){
 async function saveFus(){ try{ const r=await DB.set(K_FU, JSON.stringify(store.fus)); return r!==null && r!==undefined;}catch(e){ console.error("saveFus failed",e); return false;} }
 async function saveCats(){ try{ await DB.set(K_CATS, JSON.stringify(store.cats)); return true;}catch(e){ console.error("saveCats failed",e); return false;} }
 async function saveLanes(){ try{ await DB.set(K_LANES, JSON.stringify(store.lanes)); return true;}catch(e){ console.error("saveLanes failed",e); return false;} }
+
+/* One-time patch: update the 6/28 Indianapolis recruiting bullet wording on
+   already-saved data (the seed won't overwrite a non-empty day). Runs once. */
+async function patchRecruitingBullet0628(){
+  const FLAG="exp_patch_recruiting_0628_v1";
+  try{ if(localStorage.getItem(FLAG)) return; }catch(e){ return; }
+  const iso="2026-06-28";
+  const d=store.days[iso];
+  if(d && d.am && d.am.net && d.am.net.indexOf("Indianapolis recruiting deep-dive")>-1){
+    const oldStart="<li><b>Indianapolis recruiting deep-dive (Monday circle-up):</b>";
+    const i=d.am.net.indexOf(oldStart);
+    if(i>-1){
+      const end=d.am.net.indexOf("</li>", i);
+      if(end>-1){
+        const replacement=`<li><b>Indianapolis recruiting deep-dive (Monday circle-up):</b> Discussion on why expedited has trouble hiring in Indy when OTR seemingly can (OTR had 6–7 in orientation vs. 0 expedited/dedicated). Action: follow up on recruiting specifically in Indy — define the message, run a pay comp vs. competitors, and review how the role is being worded/sold (home daily, set hours, drop-and-hook, two days off, bonuses to offset pay). Expedited should be an attractive role to a driver who wants to be home more. We can't continue to have these gaps on weekends in Indianapolis.`;
+        d.am.net = d.am.net.slice(0,i) + replacement + d.am.net.slice(end+5);
+        await saveDays(iso);
+      }
+    }
+  }
+  try{ localStorage.setItem(FLAG,"1"); }catch(e){}
+}
+
+/* One-time patch: fix the 6/28 CC 147 "Lido/Alito" transcription to "Aledo" on
+   already-saved data. Surgical text replace within that lane's notes. Runs once. */
+async function patchAledo0628(){
+  const FLAG="exp_patch_aledo_0628_v1";
+  try{ if(localStorage.getItem(FLAG)) return; }catch(e){ return; }
+  const iso="2026-06-28";
+  const d=store.days[iso];
+  let changed=false;
+  if(d){
+    ["am","pm"].forEach(ph=>{
+      const p=d[ph]; if(!p) return;
+      const fix=s=>{
+        if(!s) return s;
+        const out=s.replace(/Lido\/Alito/g,"Aledo").replace(/\bLido\b/g,"Aledo").replace(/\bAlito\b/g,"Aledo");
+        if(out!==s) changed=true;
+        return out;
+      };
+      if(p.net) p.net=fix(p.net);
+      if(p.lanes){ Object.keys(p.lanes).forEach(k=>{ p.lanes[k]=fix(p.lanes[k]); }); }
+    });
+  }
+  if(changed) await saveDays(iso);
+  try{ localStorage.setItem(FLAG,"1"); }catch(e){}
+}
+
+/* One-time refresh: update existing users' standard lane labels/owners to the
+   corrected city spellings and CC 147 dual owners. Matches by lane id, only
+   touches lanes that still exist, and never resurrects removed lanes or disturbs
+   custom ones. Runs once (flagged). */
+async function refreshLaneLabels0628(){
+  const FLAG="exp_lane_refresh_v1";
+  try{ if(localStorage.getItem(FLAG)) return; }catch(e){ return; }
+  let changed=false;
+  DEFAULT_LANES.forEach(def=>{
+    const L=store.lanes.find(x=>x.id===def.id);
+    if(L){
+      if(L.lane!==def.lane){ L.lane=def.lane; changed=true; }
+      if(L.owner!==def.owner){ L.owner=def.owner; changed=true; }
+      if(def.owners && JSON.stringify(L.owners)!==JSON.stringify(def.owners)){ L.owners=def.owners.slice(); changed=true; }
+    }
+  });
+  try{ localStorage.setItem(FLAG,"1"); }catch(e){}
+  if(changed) await saveLanes();
+}
 async function saveOwners(){ try{ await DB.set(K_OWNERS, JSON.stringify(store.owners)); return true;}catch(e){ console.error("saveOwners failed",e); return false;} }
 
 /* ---------- helpers ---------- */
@@ -1291,7 +1428,8 @@ function capturePhaseFromDOM(){
 // the day's owners for a lane, defaulting to the lane's roster owner(s) if none set yet
 function laneOwnersForDay(p, L){
   if(p.owners && Array.isArray(p.owners[L.id])) return p.owners[L.id];
-  // seed default from roster owner string (may already be a single name)
+  // seed default from the lane's owners array if present, else the single owner string
+  if(Array.isArray(L.owners) && L.owners.length) return L.owners.slice();
   return L.owner ? [L.owner] : [];
 }
 
