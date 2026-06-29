@@ -715,6 +715,7 @@ async function load(){
   await patchRecruitingBullet0628();
   await patchAledo0628();
   await seedDebrief0628();
+  await seedBrief0629();
   await seedFollowups();
 }
 
@@ -1322,6 +1323,61 @@ async function seedDebrief0628(){
   if(!store.days[iso].pm) store.days[iso].pm={net:"",lanes:{}};
   store.days[iso].pm.net=pmNet;
   store.days[iso].pm.lanes=pmLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  await saveDays(iso);
+}
+
+/* One-time seed: 6/29 morning brief — Weekend Performance, Staffing Shortages
+   & Fleet Status. Applied only if 6/29 AM is empty. */
+async function seedBrief0629(){
+  const iso="2026-06-29";
+  const existing=store.days[iso];
+  const amHasContent = existing && existing.am &&
+    (stripHtml(existing.am.net||"").trim() || Object.values(existing.am.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(amHasContent) return;
+
+  const amLanes={
+    cc135:`<p><b>Sean — Aurora: ran 7 yesterday (a good day).</b> A couple of loads laid over in El Paso due to staffing, causing some late loads. Commitment: get ahead of it by talking with Aurora about the rest of the week so it doesn't recur.</p>
+<p><b>Today: set to run 6 of 8.</b> Two cancellations (a Walmart and a Coke load) — one worked out since it was the Texas side and they could only run one load this morning anyway. Staffing is the pinch point; should ease once the new autonomy-capable fleet arrives (no in-truck observer needed).</p>`,
+
+    cc152:`<p><b>Casey/Brian — 152 KC to Indy: 6 of 8 this morning</b> (two open shifts; filled one with an EXP driver). All running well. This afternoon down to 4 of 8 — one open shift from a driver quitting yesterday plus another Indy driver on vacation. Will fill if possible. Indy is really bad right now — drivers either quitting or not here.</p>
+<p><b>MGIN / Pepsi-Gatorade (Indy) weekend communication gap:</b> No communication with the shipper on weekends — can't tell what's ready vs. not; only find out by showing up to an unready load, then doing an empty move. Brian shifted those down and has ideas/plans to run it smoothly, but needs communication on what's loaded/empty. <i>Ashley to follow up on getting weekend communication; Brian back this afternoon.</i></p>`,
+
+    cc148:`<p><b>Allen — Indy → North Carolina:</b> A bunch of open shifts; one possible term today (will call the driver to see what's going on and try to keep him). One OTR fill-in; freight looking good. All AM running; two open PM shifts (one Indy, one North Carolina). Not pursuing OTR fill-ins for those yet since the area is already short — but leadership pushed for more urgency here and offered help pulling from OTR after the call.</p>`,
+
+    cc149:`<p><b>Brian — Bedford: one no-depart last night, one more this morning, facing a third tonight</b> — all from open seats. Paired off with Carlisle (nobody on either side). Total ~10 open seats across both lanes today. One orientation driver doing a ride-along Wednesday to start Friday.</p>`,
+
+    cc154:`<p><b>Brian — Carlisle: same paired-shortage picture</b> — facing three no-departures this evening for open seats. (Counted with Bedford: ~10 open seats total across both lanes.)</p>`,
+
+    cc151:`<p><b>Joe — 5 of 8 departures this morning with one ride-along; three open slots</b> (open positions, not yet filled). The one in answering starts tomorrow. Filling as fast as possible — some starting the 1st, one on the 29th, one as far out as the 8th. Maintenance issues from the weekend look resolved but he'll re-confirm shop clearance as new drivers get into trucks.</p>`,
+
+    cc147:`<p><b>Regina &amp; Tyler — full depart; full on parts; full on freight through the 4th.</b></p>
+<ul>
+<li>A driver got sick overnight in San Bernardino — Davey recovered the load: a team dropped their California load in Quartzsite, grabbed the load that driver was to bring back, and is dropping it in Sanborn; stacked with the extra load out of Colton. Worked out well.</li>
+<li>Yesterday's Fresh Pet load that needed transloading got transloaded and departed this morning out of Aledo.</li>
+<li>Turned in trucks 8140 and 360-2-3 to Denton yesterday (now out of fleet) — helps the elevated truck-number count; Lyndi got those removed this morning. Truck 360344 going to Velocity in Tucson today for multiple issues (RO set up). All PMs coming due now have appointments; waiting on one reply from Road on a California PM.</li>
+</ul>`
+  };
+
+  const amNet=`<p><b>Source:</b> 06/29 Morning Brief — Weekend Performance, Staffing Shortages &amp; Fleet Status. (First day of a new month.)</p>
+<p><b>Headline:</b> Rough weekend, driven by Indianapolis — two drivers quit, a couple were on vacation but not noted (last-minute scramble for cover), and overwhelming open shifts.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Weekend kudos (Nate):</b> Six expedited drivers filled in across the weekend despite all the open shifts — real credit to the weekend team for covering tough spots. Keep filling expedited-first, then do what it takes to get miles on the trucks.</li>
+<li><b>Indy driver shortage / recruiting:</b> Follow-up meeting later today on Indy drivers specifically and what our postings look like. Richard: recruiting needs to be on this call every single day; it's "more than a 9-1-1" on drivers, putting tremendous pressure on the P&amp;L. Surface anyone we've lost that we'd want back for rehire calls. Jessie was invited to the team call — she'll follow up with Richard/TJ before assigning someone; make sure the data is correct.</li>
+<li><b>PTO process:</b> If you get a PTO email, it must be entered into the time-off so it's captured — a couple weren't this weekend, forcing last-minute cover. A simplified process is coming (current one has a lot of steps).</li>
+<li><b>Scale tickets (OTR picking up for expedited):</b> Travis and Justin working it; likely pay/reimburse the individual to scale — set them up for success out of the gate. Follow-up to come.</li>
+<li><b>Aurora short-staffing:</b> Richard and Sean working it directly with Aurora.</li>
+<li><b>OTR vs. fill-ins (Lyndi):</b> On Indy/PA openings, unless we have two expedited drivers to fill a paired load, leave it OTR to pick up and deliver — filling with two OTR drivers doesn't make sense. (Counterpoint from leadership: where lanes will otherwise run empty this afternoon, OTR help comes first — talk it through with Travis.)</li>
+<li><b>Holiday prep:</b> Start booking freight for the holiday and keep expedited full; prioritize expedited and Aurora first in planning (some coverable loads went uncovered yesterday). Ashley to bring a customer open/closed list this afternoon for guidance into the holiday.</li>
+<li><b>Fleet / scorecard:</b> Scorecard shows 88 trucks, 659 miles. ~8 trucks in the shop total; 3–4 in shop status without ROs — get with Adam/Ben on those (details to TJ shortly). Weekend: six empty moves (five Fri–Sun; five were expedited lanes ending short in Arizona); 12 departures noted Sunday.</li>
+<li><b>Resources for newer/opposite-shift team members:</b> Team chat has links to the daily briefs/debriefs and to the trailer suite (all empty/available trailers on the network) — being refreshed to the top of the chat.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
+  store.days[iso].am.net=amNet;
+  store.days[iso].am.lanes=amLanes;
   store.days[iso].savedAt=new Date().toISOString();
   await saveDays(iso);
 }
