@@ -201,6 +201,43 @@
   .cat-badge{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap}
   .notes-cell{max-width:280px}
   .action-cell{max-width:220px;font-weight:600;color:var(--navy)}
+  /* on-call schedule */
+  .oncall-modes{display:flex;gap:6px}
+  .ocmode-btn{padding:7px 14px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;font-weight:600;color:var(--navy)}
+  .ocmode-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .oc-monthbar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .oc-monthlabel{font-size:18px;font-weight:800;color:var(--navy);min-width:180px;text-align:center}
+  .oc-grid-head{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+  .oc-grid-head>div{text-align:center;font-size:11px;font-weight:700;color:#6b7a90;text-transform:uppercase;letter-spacing:.04em}
+  .oc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .oc-cell{min-height:96px;border:1px solid var(--line);border-radius:10px;padding:7px;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:4px;transition:border-color .12s,box-shadow .12s}
+  .oc-cell:hover{border-color:var(--orange);box-shadow:0 1px 6px rgba(0,0,0,.06)}
+  .oc-cell.oc-empty-day{background:#f7f8fa;cursor:default;border-style:dashed}
+  .oc-cell.oc-empty-day:hover{border-color:var(--line);box-shadow:none}
+  .oc-cell.oc-today{border-color:var(--orange);box-shadow:0 0 0 2px rgba(243,112,33,.15)}
+  .oc-daynum{font-size:12px;font-weight:700;color:#6b7a90}
+  .oc-cell.oc-today .oc-daynum{color:var(--orange)}
+  .oc-leader{font-size:12px;font-weight:600;color:var(--navy);background:#eef2f7;border-radius:6px;padding:2px 6px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .oc-leader .oc-ph{font-weight:500;color:#6b7a90}
+  .oc-more{font-size:11px;color:#6b7a90;font-weight:600}
+  /* two-week list */
+  .oc-tw-row{display:flex;gap:14px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:8px;background:#fff;cursor:pointer}
+  .oc-tw-row:hover{border-color:var(--orange)}
+  .oc-tw-row.oc-today{border-color:var(--orange);box-shadow:0 0 0 2px rgba(243,112,33,.12)}
+  .oc-tw-date{min-width:120px}
+  .oc-tw-dow{font-size:12px;font-weight:700;color:#6b7a90;text-transform:uppercase;letter-spacing:.03em}
+  .oc-tw-day{font-size:18px;font-weight:800;color:var(--navy)}
+  .oc-tw-leaders{flex:1;display:flex;flex-direction:column;gap:6px}
+  .oc-tw-leader{font-size:14px;color:var(--navy)}
+  .oc-tw-leader b{font-weight:700}
+  .oc-tw-leader .oc-ph{color:#41607f}
+  .oc-tw-note{font-size:13px;color:#5a6b7e;font-style:italic;margin-top:2px}
+  .oc-tw-empty{color:#9aa7b6;font-style:italic}
+  /* editor modal rows */
+  .oc-leader-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .oc-leader-row input{flex:1}
+  .oc-leader-row .oc-phone{max-width:150px;flex:0 0 auto}
+  .oc-remove{cursor:pointer;color:#b23b3b;font-weight:700;border:none;background:none;font-size:18px;line-height:1;padding:4px 8px}
   .notes-cell ul,.notes-cell ol{margin:3px 0 3px 18px;padding:0}
   .row-actions{display:flex;gap:5px;white-space:nowrap}
   .icon-btn{border:0;background:none;cursor:pointer;width:30px;height:30px;border-radius:7px;
@@ -290,6 +327,7 @@
   <button data-view="followups">✅ Follow-ups <span class="pill" id="openPill">0</span></button>
   <button data-view="archive">📦 Archive <span class="pill pill-muted" id="archivePill">0</span></button>
   <button data-view="history">🗂️ History</button>
+  <button data-view="oncall">📅 On-Call</button>
   <button data-view="lanes">🛣️ Lanes &amp; Owners</button>
 </nav>
 
@@ -429,6 +467,38 @@
     <div class="empty" id="histEmpty" style="display:none">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h18v18H3z"/><path d="M3 9h18M9 21V9"/></svg>
       <div>No saved days yet. Fill in a brief and hit “Save day”.</div>
+    </div>
+  </section>
+
+  <!-- ============ ON-CALL ============ -->
+  <section class="view" id="view-oncall">
+    <div class="toolbar">
+      <h2>On-Call Leader Schedule</h2>
+      <div class="spacer"></div>
+      <div class="oncall-modes">
+        <button class="ocmode-btn active" data-ocmode="month">Month</button>
+        <button class="ocmode-btn" data-ocmode="twoweek">Next 2 Weeks</button>
+      </div>
+    </div>
+
+    <!-- month view -->
+    <div id="ocMonthWrap">
+      <div class="oc-monthbar">
+        <button class="icon-btn" id="ocPrev" title="Previous month">‹</button>
+        <div id="ocMonthLabel" class="oc-monthlabel">—</div>
+        <button class="icon-btn" id="ocNext" title="Next month">›</button>
+        <div class="spacer"></div>
+        <button class="btn-ghost" id="ocToday">Today</button>
+      </div>
+      <div class="oc-grid-head">
+        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+      </div>
+      <div class="oc-grid" id="ocGrid"></div>
+    </div>
+
+    <!-- two-week view -->
+    <div id="ocTwoWeekWrap" style="display:none">
+      <div id="ocTwoWeekList"></div>
     </div>
   </section>
 
@@ -587,6 +657,29 @@
   </div>
 </div>
 
+<div class="overlay" id="ocOverlay">
+  <div class="modal">
+    <div class="m-head"><h3 id="ocModalTitle">On-Call</h3><button class="x" id="ocClose">×</button></div>
+    <div class="m-body">
+      <input type="hidden" id="ocDate">
+      <div class="field">
+        <label>Leaders on call <span class="hint">(name + optional phone)</span></label>
+        <div id="ocLeaderRows"></div>
+        <button class="btn ghost sm" id="ocAddLeader" type="button">+ Add leader</button>
+      </div>
+      <div class="field">
+        <label>Note <span class="hint">(optional)</span></label>
+        <textarea id="ocNote" rows="3" placeholder="Anything the on-call team should know for this day…"></textarea>
+      </div>
+    </div>
+    <div class="m-foot">
+      <button class="btn ghost" id="ocClear" style="margin-right:auto">Clear day</button>
+      <button class="btn ghost" id="ocCancel">Cancel</button>
+      <button class="btn primary" id="ocSave">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -615,7 +708,7 @@ const CAT_COLORS = {
 };
 
 /* ---------- storage ---------- */
-const K_DAYS="exp_brief_days", K_FU="exp_followups", K_CATS="exp_cats", K_LANES="exp_lanes", K_OWNERS="exp_owners";
+const K_DAYS="exp_brief_days", K_FU="exp_followups", K_CATS="exp_cats", K_LANES="exp_lanes", K_OWNERS="exp_owners", K_ONCALL="exp_oncall";
 const K_DAY_PREFIX="exp_day_"; // per-day keys: exp_day_2026-06-26 (keeps each write small)
 
 /* ---------- storage adapter ----------
@@ -668,7 +761,8 @@ let store = {
   fus: [],         // follow-up items
   cats: [...DEFAULT_CATS],
   lanes: JSON.parse(JSON.stringify(DEFAULT_LANES)),
-  owners: [...DEFAULT_OWNERS]
+  owners: [...DEFAULT_OWNERS],
+  oncall: {}       // {dateISO: {leaders:[{name,phone}], note}}
 };
 async function load(){
   // Days are stored one key per day (exp_day_<iso>) so each write stays small and
@@ -702,6 +796,9 @@ async function load(){
   }catch(e){}
   try{
     const o = await DB.get(K_OWNERS); if(o){ const arr=JSON.parse(o.value); if(Array.isArray(arr)) store.owners=arr; }
+  }catch(e){}
+  try{
+    const oc = await DB.get(K_ONCALL); if(oc){ const obj=JSON.parse(oc.value); if(obj && typeof obj==="object") store.oncall=obj; }
   }catch(e){}
   await refreshLaneLabels0628();
   await seedDebrief0624();
@@ -1460,6 +1557,7 @@ async function refreshLaneLabels0628(){
   if(changed) await saveLanes();
 }
 async function saveOwners(){ try{ await DB.set(K_OWNERS, JSON.stringify(store.owners)); return true;}catch(e){ console.error("saveOwners failed",e); return false;} }
+async function saveOncall(){ try{ await DB.set(K_ONCALL, JSON.stringify(store.oncall)); return true;}catch(e){ console.error("saveOncall failed",e); return false;} }
 
 /* ---------- helpers ---------- */
 const $ = s=>document.querySelector(s);
@@ -1510,6 +1608,7 @@ $$(".nav button").forEach(b=>b.onclick=()=>{
   if(b.dataset.view==="followups") renderFus();
   if(b.dataset.view==="archive") renderArchive();
   if(b.dataset.view==="history") renderHist();
+  if(b.dataset.view==="oncall") renderOncall();
   if(b.dataset.view==="lanes"){ renderLaneTable(); renderOwnerTable(); }
 });
 
@@ -2295,6 +2394,146 @@ function renderHist(){
     $("#view-today").classList.add("active");
   });
 }
+
+/* ---------- on-call schedule ---------- */
+let ocMode = "month";              // "month" | "twoweek"
+let ocCursor = (function(){ const d=new Date(); return {y:d.getFullYear(), m:d.getMonth()}; })();
+const OC_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const OC_DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+function ocIso(y,m,d){ // m is 0-based
+  return `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+}
+function ocDayData(iso){
+  const x=store.oncall[iso];
+  if(!x) return {leaders:[], note:""};
+  return {leaders:Array.isArray(x.leaders)?x.leaders:[], note:x.note||""};
+}
+function ocHasData(iso){ const d=ocDayData(iso); return d.leaders.some(l=>l.name&&l.name.trim()) || (d.note&&d.note.trim()); }
+
+function renderOncall(){
+  if(ocMode==="month"){
+    $("#ocMonthWrap").style.display="";
+    $("#ocTwoWeekWrap").style.display="none";
+    renderOncallMonth();
+  }else{
+    $("#ocMonthWrap").style.display="none";
+    $("#ocTwoWeekWrap").style.display="";
+    renderOncallTwoWeek();
+  }
+  $$(".ocmode-btn").forEach(x=>x.classList.toggle("active", x.dataset.ocmode===ocMode));
+}
+
+function renderOncallMonth(){
+  $("#ocMonthLabel").textContent = `${OC_MONTHS[ocCursor.m]} ${ocCursor.y}`;
+  const grid=$("#ocGrid"); grid.innerHTML="";
+  const first=new Date(ocCursor.y, ocCursor.m, 1);
+  const startDow=first.getDay();
+  const daysInMonth=new Date(ocCursor.y, ocCursor.m+1, 0).getDate();
+  const today=todayISO();
+  // leading blanks
+  for(let i=0;i<startDow;i++){
+    const c=document.createElement("div"); c.className="oc-cell oc-empty-day"; grid.appendChild(c);
+  }
+  for(let d=1; d<=daysInMonth; d++){
+    const iso=ocIso(ocCursor.y, ocCursor.m, d);
+    const data=ocDayData(iso);
+    const c=document.createElement("div");
+    c.className="oc-cell"+(iso===today?" oc-today":"");
+    let html=`<div class="oc-daynum">${d}</div>`;
+    const named=data.leaders.filter(l=>l.name&&l.name.trim());
+    named.slice(0,3).forEach(l=>{
+      html+=`<div class="oc-leader" title="${escapeHtml(l.name)}${l.phone?" · "+escapeHtml(l.phone):""}">${escapeHtml(l.name)}${l.phone?` <span class="oc-ph">${escapeHtml(l.phone)}</span>`:""}</div>`;
+    });
+    if(named.length>3) html+=`<div class="oc-more">+${named.length-3} more</div>`;
+    if(!named.length && data.note && data.note.trim()) html+=`<div class="oc-more">📝 note</div>`;
+    c.innerHTML=html;
+    c.onclick=()=>openOncallEditor(iso);
+    grid.appendChild(c);
+  }
+}
+
+function renderOncallTwoWeek(){
+  const wrap=$("#ocTwoWeekList"); wrap.innerHTML="";
+  const today=todayISO();
+  const base=new Date(today+"T00:00:00");
+  for(let i=0;i<14;i++){
+    const dt=new Date(base); dt.setDate(base.getDate()+i);
+    const iso=ocIso(dt.getFullYear(), dt.getMonth(), dt.getDate());
+    const data=ocDayData(iso);
+    const named=data.leaders.filter(l=>l.name&&l.name.trim());
+    const row=document.createElement("div");
+    row.className="oc-tw-row"+(iso===today?" oc-today":"");
+    let leadersHtml="";
+    if(named.length){
+      leadersHtml=named.map(l=>`<div class="oc-tw-leader"><b>${escapeHtml(l.name)}</b>${l.phone?` — <span class="oc-ph">${escapeHtml(l.phone)}</span>`:""}</div>`).join("");
+    }else{
+      leadersHtml=`<div class="oc-tw-empty">No one assigned</div>`;
+    }
+    if(data.note && data.note.trim()) leadersHtml+=`<div class="oc-tw-note">${escapeHtml(data.note)}</div>`;
+    row.innerHTML=`
+      <div class="oc-tw-date">
+        <div class="oc-tw-dow">${OC_DOW[dt.getDay()]}${iso===today?" · Today":""}</div>
+        <div class="oc-tw-day">${OC_MONTHS[dt.getMonth()].slice(0,3)} ${dt.getDate()}</div>
+      </div>
+      <div class="oc-tw-leaders">${leadersHtml}</div>`;
+    row.onclick=()=>openOncallEditor(iso);
+    wrap.appendChild(row);
+  }
+}
+
+/* on-call editor modal */
+function ocAddLeaderRow(name, phone){
+  const wrap=$("#ocLeaderRows");
+  const row=document.createElement("div");
+  row.className="oc-leader-row";
+  row.innerHTML=`
+    <input type="text" class="oc-name" list="ownerList" placeholder="Leader name…" value="${escapeHtml(name||"")}">
+    <input type="text" class="oc-phone" placeholder="Phone (optional)" value="${escapeHtml(phone||"")}">
+    <button class="oc-remove" type="button" title="Remove">×</button>`;
+  row.querySelector(".oc-remove").onclick=()=>row.remove();
+  wrap.appendChild(row);
+}
+function openOncallEditor(iso){
+  $("#ocDate").value=iso;
+  $("#ocModalTitle").textContent="On-Call — "+fmtLong(iso);
+  const data=ocDayData(iso);
+  const wrap=$("#ocLeaderRows"); wrap.innerHTML="";
+  if(data.leaders.length){ data.leaders.forEach(l=>ocAddLeaderRow(l.name,l.phone)); }
+  else { ocAddLeaderRow("",""); }
+  $("#ocNote").value=data.note||"";
+  $("#ocOverlay").classList.add("show");
+}
+function closeOncallEditor(){ $("#ocOverlay").classList.remove("show"); }
+
+async function saveOncallEditor(){
+  const iso=$("#ocDate").value;
+  const leaders=[];
+  $$("#ocLeaderRows .oc-leader-row").forEach(r=>{
+    const name=r.querySelector(".oc-name").value.trim();
+    const phone=r.querySelector(".oc-phone").value.trim();
+    if(name) leaders.push({name, phone});
+  });
+  const note=$("#ocNote").value.trim();
+  if(!leaders.length && !note){ delete store.oncall[iso]; }
+  else { store.oncall[iso]={leaders, note}; }
+  const ok=await saveOncall();
+  toast(ok?"On-call saved — "+fmtDate(iso):"⚠️ Couldn't save — storage error.");
+  closeOncallEditor();
+  renderOncall();
+}
+
+// wiring
+$$(".ocmode-btn").forEach(b=>b.onclick=()=>{ ocMode=b.dataset.ocmode; renderOncall(); });
+$("#ocPrev").onclick=()=>{ ocCursor.m--; if(ocCursor.m<0){ ocCursor.m=11; ocCursor.y--; } renderOncallMonth(); };
+$("#ocNext").onclick=()=>{ ocCursor.m++; if(ocCursor.m>11){ ocCursor.m=0; ocCursor.y++; } renderOncallMonth(); };
+$("#ocToday").onclick=()=>{ const d=new Date(); ocCursor={y:d.getFullYear(), m:d.getMonth()}; renderOncallMonth(); };
+$("#ocAddLeader").onclick=()=>ocAddLeaderRow("","");
+$("#ocClose").onclick=closeOncallEditor;
+$("#ocCancel").onclick=closeOncallEditor;
+$("#ocClear").onclick=()=>{ $("#ocLeaderRows").innerHTML=""; ocAddLeaderRow("",""); $("#ocNote").value=""; };
+$("#ocSave").onclick=saveOncallEditor;
+$("#ocOverlay").onclick=e=>{ if(e.target.id==="ocOverlay") closeOncallEditor(); };
 
 /* ---------- manage lanes ---------- */
 function slug(s){ return (s||"").toLowerCase().replace(/[^a-z0-9]+/g,"").slice(0,20); }
