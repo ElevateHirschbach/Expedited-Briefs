@@ -813,6 +813,7 @@ async function load(){
   await patchAledo0628();
   await seedDebrief0628();
   await seedBrief0629();
+  await seedDebrief0629();
   await seedFollowups();
 }
 
@@ -1475,6 +1476,58 @@ async function seedBrief0629(){
   if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
   store.days[iso].am.net=amNet;
   store.days[iso].am.lanes=amLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  await saveDays(iso);
+}
+
+/* One-time seed: 6/29 afternoon debrief — Indy Trailer Shortage, Open Shifts,
+   Holiday Logistics & Truck Maintenance. Applied only if 6/29 PM is empty. */
+async function seedDebrief0629(){
+  const iso="2026-06-29";
+  const existing=store.days[iso];
+  const pmHasContent = existing && existing.pm &&
+    (stripHtml(existing.pm.net||"").trim() || Object.values(existing.pm.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(pmHasContent) return;
+
+  const pmLanes={
+    cc135:`<p><b>Sean — Aurora: running 5 of 8.</b> Two cancellations today, and one trailer didn't pass (cracked frame rail). Three more inspections pending for this evening's run.</p>
+<p><b>Looking ahead:</b> Rough on freight for the 5th — most of it would have to pick up the 4th to make the yard. Aurora cross-member inspection meeting is Thursday.</p>`,
+
+    cc152:`<p><b>Brian — 152 KC to Indy: 4 of 8 this afternoon</b> (two open shifts in Indy + one Kansas City call-out). Open shifts the rest of the week; has filled Tuesday, Wednesday, and Saturday so far; still working the rest.</p>
+<p><b>Pepsi (Indy) weekend fix — seen through end to end (kudos from leadership):</b> Built a rotation to solve the no-weekend-communication problem — pick up Mondays/Wednesdays/Fridays, with Friday pickups covering the weekend so weekend contact isn't required unless there's an issue. 72 hours to deliver once picked up; scored by pickup date, not delivery.</p>
+<p><b>Blocker — empty trailers at Pepsi/Indy:</b> Needs 6 empties ASAP (has 1), plus ~10 more for booked loads. The empties showing on the SharePoint at the yard are all red-tagged or have locks on them — Brian's driver pulled the only clean one (8 total, ~7 left). Need a shop truck out there to clear the red-tagged ones. OTR drivers contacted weren't willing to shag trailers. <i>Travis following up; Tony (Salt Lake) is the trailer guy; Nate focusing on getting empties into Pepsi. Rule going forward: don't dispatch anyone in without an empty trailer.</i></p>`,
+
+    cc148:`<p><b>Bonnie — 148 Indy → North Carolina:</b> Three OTR fill-ins today; only ran one pair at 1800 due to open shifts. Freight looks good.</p>
+<p><b>Driver issues:</b> Likely a term coming — an Indy driver no-call/no-show (texted another driver that he's not coming in, but didn't tell dispatch); Bonnie to call her. Note: this is also the driver whose July 4th time-off was denied (no fill-ins), and expectations were already discussed — more to the story. The driver who termed over the weekend never responded to messages; will be termed tomorrow.</p>`,
+
+    cc149:`<p><b>Brian — Bedford: full freight for available drivers; 2 no-departs today, facing one more in the morning</b> — all open shifts.</p>`,
+
+    cc154:`<p><b>Brian — Carlisle: full freight for available drivers; 4 no-departs today, one more in the morning.</b> Used three drivers for local work on the PA side (couldn't secure Indy fill-ins). Looking for two Indy fill-ins for tomorrow afternoon to avoid repeats and keep freight moving — commitment is to keep working fill-ins until new drivers arrive.</p>`,
+
+    cc151:`<p><b>Joe — 6 of 8 departures this evening;</b> two lanes were waiting on orientation drivers (in orientation today, should be in Wednesday). Looking a lot better tomorrow: ~15 of 16, with fill-ins already set up for Wednesday and Thursday to run <b>16 of 16</b> — the first time running all sixteen since combining 151 and 156.</p>`,
+
+    cc147:`<p><b>Regina — California/Texas running very well; no issues; full on parts both sides; all loads on time.</b> Texas freight full through Saturday the 4th; still need a few loads for the 5th–6th (time for those to drop in).</p>
+<ul>
+<li>Maintenance: 360344 over to the Tucson shop; 360356 to the shop for its due PM; 360423 on its way to Denton for a trade-in. All PM trucks now have appointments to be done in Denton.</li>
+<li>San Bernardino new-driver ride-along set for tomorrow. Two Lytx events to coach and clean up.</li>
+<li>Regina and Tyler are off next week.</li>
+</ul>`
+  };
+
+  const pmNet=`<p><b>Source:</b> 06/29 Afternoon Debrief — Indy Trailer Shortage, Open Shifts, Holiday Logistics &amp; Truck Maintenance.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Indy driver shortage — meeting held today:</b> Looking at sign-on bonuses and a rehire blitz across OTR / dedicated / expedited; lots of good ideas. More to come — relief expected soon. A new recruiting partner attended for the first time, working to stack up more Indy drivers.</li>
+<li><b>Pepsi/Indy empty-trailer blocker:</b> The weekend-communication fix is in place, but it's gated on getting empty trailers into the Indy Pepsi yard (most on-yard empties are red-tagged/locked). Travis to follow up; Tony (Salt Lake) on trailers; Nate getting empties in. Don't dispatch in without an empty trailer once fixed.</li>
+<li><b>Holiday logistics (Ashley + Nate):</b> Ashley sharing a shipper open/closed spreadsheet with the whole group — many shippers still open Friday, some going dark, some shipping into early Saturday; a few closed Saturday or short on trailer access. The struggle points are the 4th (very little loads) and the 5th AM. Nate: anything that loads early, drop it — they'll move things around and back drivers up to keep moving.</li>
+<li><b>Planning / pre-T prioritization (Travis):</b> Strong focus on planning expedited units first and getting them to the yards by cutoff, plus tying pre-T and auto-dispatch together. Spent ~an hour on it this afternoon; answers and timelines expected by midweek. Nate gave the planning team a shout-out for much-improved rate-to-yard, especially today.</li>
+<li><b>Fleet / scorecard:</b> ~88 trucks running (will inflate toward ~90 from two CC 147 trade-ins counting double). Target ~72,000 miles/day; ~2,500 miles up on yesterday. Nate's math: at the 800-mile/truck goal, every ~10 shifts not run costs ~70–80 miles/truck (≈5–8 per shift) — so running every possible shift is critical. Maintenance: 9 trucks being worked; 3 still without ROs (get Adam/Ben on those); 5 with ROs have ETCs today/tomorrow/Wednesday.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].pm) store.days[iso].pm={net:"",lanes:{}};
+  store.days[iso].pm.net=pmNet;
+  store.days[iso].pm.lanes=pmLanes;
   store.days[iso].savedAt=new Date().toISOString();
   await saveDays(iso);
 }
