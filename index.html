@@ -822,6 +822,7 @@ async function load(){
   await seedBrief0702();
   await seedDebrief0702();
   await seedBrief0703();
+  await seedDebrief0703();
   await seedFollowups();
 }
 
@@ -1872,6 +1873,55 @@ async function seedBrief0703(){
   if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
   store.days[iso].am.net=amNet;
   store.days[iso].am.lanes=amLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  await saveDays(iso);
+}
+
+/* One-time seed: 7/3 afternoon debrief — Trailer Failures, Lane Status & Freight
+   Coordination. (Kristi led.) */
+async function seedDebrief0703(){
+  const iso="2026-07-03";
+  const existing=store.days[iso];
+  const pmHasContent = existing && existing.pm &&
+    (stripHtml(existing.pm.net||"").trim() || Object.values(existing.pm.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(pmHasContent) return;
+
+  const pmLanes={
+    cc135:`<p><b>Sean — Aurora (Nate reporting; Sean off): ran one load today; not running anything tonight or tomorrow (holiday).</b></p>
+<p><b>Cross-member investigation:</b> Nate to follow up with Sean on the trailers coming across with cross-member issues — are they all from the same location/customer, and is it the same cross member each time? They're coming from everywhere (Colton, the West end, and Texas), so the key question maintenance (Earl's group) is asking is whether it's the same cross member. Goal: weed out the source given how many we've had the last two weeks.</p>`,
+
+    cc152:`<p><b>Josh — 152 KC: good afternoon — 8 of 8 drivers rolling and all loaded.</b> Good news for the morning too: 8 drivers (no open shifts), one fill-in from Brian on the PA side (shows as WATYL1 in blue = a fill-in from a different lane), and 8 loads — so likely 8 of 8 today and 8 of 8 tomorrow.</p>
+<p><b>Needs help (Nate):</b> Called a road truck to TCO in Kansas City and got them heading to Lincoln for Smithfield — then found out Smithfield's closed. Doesn't want to strand the driver; may need a branch turn-on.</p>`,
+
+    cc148:`<p><b>Allen — 148 Indy → North Carolina: one fill-in tonight, one OTR helping the AM shift; running as full as possible.</b> Five departures / ten segments tonight (running 10 of 12 possible segments). Tomorrow morning: 12 of 12 segments running with one OTR fill-in. Loads looking good.</p>`,
+
+    cc149:`<p><b>Brian — Bedford: one open shift, running 3 of 4 pairs (6 of 8).</b> Using the extra PA driver to help pick up loads in the northeast (they were struggling to get loads picked up, which would have shorted us tomorrow).</p>`,
+
+    cc154:`<p><b>Brian — Carlisle: same — running 3 of 4 pairs.</b> Moved the fill-in driver from the Bedford side to Carlisle to make the best use of everyone and free a PA body to help pick up more loads. Secured another OTR fill-in for the Indy side. Heading into the weekend with more drivers — just need to keep loads picked up and on time. (Big progress from the start of the week.)</p>`,
+
+    cc151:`<p><b>Sarah — 6 of 8 pairs</b> (a ride-along for a new hire; the other new driver doesn't start until July 10 — by the 8th this lane should be fully staffed). Two just cleared orientation (started the 1st) and are doing ride-alongs. All lanes dispatched and tracking; a couple trucks trickled back a little late (a tire repair, ~30 min — shouldn't impact the next lane).</p>
+<p><b>Sunday freight concern:</b> Texas looks thin — two Shaw loads (one pushed out, one canceled) hollowed out what looked good earlier; three Texas spots in question. Has about half filled; worst case some empty moves. Kristi's option: run to a halfway point (or into Oklahoma) to at least stay loaded, using yard empties. Sarah and Ashley to keep sweeping the boards.</p>`,
+
+    cc147:`<p><b>Regina — full depart on both ends; Sunnyvale is live-loading with drivers planned to pick up.</b> One local (truck 32574 / "Amber") hadn't confirmed as of ~2 PM, but the planner (Alexis) is confident — Kristi asked Travis to call and verify rather than assume; Nate to message her too.</p>
+<p><b>Colton transload:</b> One Colton load has no air to the tandems and must be transloaded — gave the driver another load and will pick this one back up at 23:00 tonight; still makes OTD if it departs tonight. Noted to stage someone in Merkel at 5 AM Sunday to grab it. Lytx caught up (thanks Rob). Full on freight — need one load for the 8th.</p>`
+  };
+
+  const pmNet=`<p><b>Source:</b> 07/03 Afternoon Debrief — Trailer Failures, Lane Status &amp; Freight Coordination. (Kristi led; day before the holiday.)</p>
+<p><b>Segment counting (for clarity):</b> A "depart" = both drivers on a lane departing; each pair = 2 segments. So the network total possible tonight is 12 segments — reporting it as "running 10 of 12 segments" keeps everyone on the same page. The debrief format will be cleaned up along these lines next week.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Truck cleanliness at turnover:</b> With turnover the highest it's been since running expedited, don't give drivers extra reasons to be frustrated — a few photos of dirty truck interiors/exteriors came in. Reinforce cleaning out the truck before transfers. Regina to add Kristi to the "expedited handoff" team group chat so she sees them directly; this goes in next week's video and DL talking points.</li>
+<li><b>New weekly video:</b> John, Kristi, Lyndi and Nate are starting a weekly behind-the-scenes video for the team (starting next week) so everyone stays in the loop on what's happening on the front lines — viewable on your own time, on or off shift. Send topic ideas.</li>
+<li><b>Miles (Nate):</b> Lighter today with Driscoll's and Aurora down — those two are off ~11,000 miles between yesterday and today — but every other lane combined is already ~1,100 miles over yesterday, with only one trailer move so far. Great effort getting drivers (and creative OTR help) in to fill.</li>
+<li><b>Freight wins (Richard):</b> Red Bull is coming back and accepting the rates we quoted a couple months ago — East Coast freight out of Arizona (great news). Walmart freight is still up in the air (Richard spoke with them within the hour; they're working on it).</li>
+<li><b>Pre-T departure process (Travis):</b> The process Lyndi sent worked — went through it across the different markets yesterday, got confirmation and understanding, no gray area. Should be better going forward.</li>
+<li><b>Freight desk (Ashley):</b> Slim pickings and EDI slowing over the last hour heading into the holiday; will keep sweeping the boards. Nice work by the planning team on first-mile/final-mile.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].pm) store.days[iso].pm={net:"",lanes:{}};
+  store.days[iso].pm.net=pmNet;
+  store.days[iso].pm.lanes=pmLanes;
   store.days[iso].savedAt=new Date().toISOString();
   await saveDays(iso);
 }
