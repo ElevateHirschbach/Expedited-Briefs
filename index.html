@@ -811,6 +811,7 @@ async function load(){
   await seedBrief0628();
   await patchRecruitingBullet0628();
   await patchAledo0628();
+  await patchMetrics0703();
   await seedDebrief0628();
   await seedBrief0629();
   await seedDebrief0629();
@@ -820,6 +821,7 @@ async function load(){
   await seedDebrief0701();
   await seedBrief0702();
   await seedDebrief0702();
+  await seedBrief0703();
   await seedFollowups();
 }
 
@@ -1809,6 +1811,70 @@ async function seedDebrief0702(){
   store.days[iso].savedAt=new Date().toISOString();
   await saveDays(iso);
 }
+
+/* One-time seed: 7/3 morning brief — Operations & Performance Review. (Kristi led.) */
+async function seedBrief0703(){
+  const iso="2026-07-03";
+  const existing=store.days[iso];
+  const amHasContent = existing && existing.am &&
+    (stripHtml(existing.am.net||"").trim() || Object.values(existing.am.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(amHasContent) return;
+
+  const amLanes={
+    cc135:`<p><b>Sean — Aurora: supposed to run four (two 2 AM departures each side); down to 1 of 4 today.</b></p>
+<ul>
+<li>Two loads didn't make the yard: the West load was a tough plan (driver had to start his clock early in the afternoon, then the California pickup didn't happen until evening, draining his 14-hour clock — came up short). The Texas-side load had shipper issues about where it was going after a driver swap.</li>
+<li>The third truck had an ABS-light issue (also a cross-member issue) that can't be fixed before departure.</li>
+</ul>
+<p><b>Holiday:</b> No departures tomorrow (the 4th). Sean will get communication out to Aurora on the inspection inconsistency (some weeks great, some poor — possibly staffing-driven strictness) and may move their weekly meeting up to Mon/Tue since they didn't meet this week.</p>`,
+
+    cc152:`<p><b>Josh — 152 KC: rough night (the recurring pattern — rough mornings, great afternoons); ran 4 of 8 last night.</b> One was an open shift; the others were three trailers all with light issues. Night's team looked for backup loads on the Indy side; the insurance-load system (a spare load pre-staged on each side to keep a driver rolling) didn't save it this time.</p>
+<ul>
+<li>The Indy→KC load (trailer 44473-39) was missed by EOR for capacity; Rahul found a driver, but it loaded after hours (evening appointment), so it couldn't be checked during the day — the OTR driver evidently didn't post-trip it. The KC-side issue was a jacked-up pigtail. Samsung (overnight) put work orders on them. <i>(Kristi wants the trailer numbers and which OTR drivers pulled them, to check the missed post-trips; Nate to follow up with their fleet leaders.)</i></li>
+<li><b>For Travis:</b> found a Cargill load in Friona, TX (area 9) ready a couple days early — if we can turn it to Kansas City it fills one of the open KC spots (trip number in the notes).</li>
+</ul>`,
+
+    cc148:`<p><b>Allen — 148 Indy → North Carolina: expedited drivers and freight looking good; ran full last night with two fill-ins.</b> Running one set short this morning for lack of a North Carolina driver (NC is where fill-ins are most needed). Working the planners to find weekend coverage.</p>`,
+
+    cc149:`<p><b>Brian — Bedford: open shifts on the Indy side, but ran full this morning.</b> One truck has its A/C out — set to be fixed this afternoon when it reaches Indy.</p>`,
+
+    cc154:`<p><b>Brian — Carlisle: same open shifts; ran 3 of 4 this morning.</b> Two OTR fill-ins this afternoon, and two new drivers start today — moves in the right direction. Goal: find more fill-ins for full departures. Working through the Lytx list today.</p>`,
+
+    cc151:`<p><b>Sarah — 7 of 8 departs.</b> The one short is a new hire who cleared orientation and did a ride-along to Kansas this morning. A Denton load that wasn't T-called got switched this morning to save service (due tonight in Harrisonville — can make OTD). A Kansas City load that didn't make the yard had to be returned to OTR to save service (due the 4th at 2 AM, customer load).</p>
+<p><b>The KC miss:</b> the driver just didn't roll after his break (driver 350119, Ken Young, lives Charleston, MO) — gave an ETA of 1400 when the load was needed by ~8 AM; still in the sleeper. <i>(Sean to follow up on what happened.)</i></p>`,
+
+    cc147:`<p><b>Regina — running full to parts.</b> Two trucks down in Tucson (one already in the shop; the other goes over Monday when 360344 is ready for pickup) — a Penske rental is covering one now.</p>
+<p><b>Biggest concern — Sunnyvale trailers:</b> only two trailers showing there against nine loads for pickup (every one of tomorrow's loads is a Sunnyvale, and all but one of the 5th's) — all supposed to pick up today. Real concern about getting empties in and the loads picked up; Alexis is working on empties, but they're scarce. Plan: catch up Lytx and keep tracking the loads needing trailers.</p>`
+  };
+
+  const amNet=`<p><b>Source:</b> 07/03 Morning Brief — Operations &amp; Performance Review. (Kristi led; Fri before the holiday.)</p>
+<p><b>Fleet snapshot (Lyndi):</b> 90 trucks yesterday, 747 miles/truck — a nice comeback given the 13 open shifts (15 opportunities). 6 down trucks (ETCs not confirmed with Ben); 6 autonomous departures. Missed miles: 5,233 (no-departs, OTR fill-ins, PTO/time off) — a lot of missed revenue at $2.70/mile — plus ~1,900 empty miles (better than we've been; one empty was preventable, but without it we'd have failed the loads marked on the other end). Terms: 6, with one pending — the driver with no car has until Tuesday to show for a shift or we part ways.</p>
+<p><b>Yesterday's numbers:</b></p>
+<ul>
+<li><b>Missed miles:</b> 5,233 — no-departs + OTR fill-ins.</li>
+<li><b>Missed revenue:</b> $14,129.10 (at $2.70/mile).</li>
+<li><b>MT (empty) miles:</b> 1,900 — CLDL MGIN 4448324 + KC→OK and OK→TX.</li>
+<li><b>MT mile spend:</b> $4,370.00 (avg EXP round trip 475 at $2.30/mile).</li>
+<li><b>Terms:</b> 6. Pending: CABHE1 — no car to get to work; gave him until Tuesday.</li>
+</ul>
+<p><b>Lytx (Lyndi):</b> Don't fall behind on coaching — reach as many drivers as possible today. A few fleets trending the right way on coachability; focus next week on the fleets with more events where coaching is less effective.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Trailer light issues / post-trips (152):</b> Multiple trailers dropped for us with marker-light/pigtail problems that a post-trip should have caught. Validating there's an RO and real maintenance (not a driver avoiding work); identifying the OTR drivers/fleet leaders involved.</li>
+<li><b>Holiday planning gaps (Travis):</b> Gaps to close going into the holiday weekend on planner↔driver↔DL communication and locking loads in. Travis following up on the Sunnyvale (147) and the Kansas load Brian flagged, and reporting back.</li>
+<li><b>Safety (John):</b> July 3rd today, 4th tomorrow — increased traffic and distracted drivers out there. Reinforce extra caution on every driver phone call.</li>
+<li><b>Momentum (Nate):</b> Short of the mile goal yesterday but a big jump from the prior few days — good job getting expedited drivers to fill in; 1,900 empty miles is much better. Keep the momentum and the positive mindset.</li>
+<li><b>Recruiting (Jesse):</b> Four scheduled for next week. Jacob Combs cleared Express orientation (North Carolina, 4 PM Tue–Sat) and is ready to roll now — not technically scheduled until next week, but available; give him a call.</li>
+<li><b>Travel note (TJ):</b> Likely no one in Travel today; Driver Experience is in and can help with travel-related needs.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
+  store.days[iso].am.net=amNet;
+  store.days[iso].am.lanes=amLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  await saveDays(iso);
+}
 async function saveDays(iso){
   // Save one day per key so writes stay small. Defaults to the current operating day.
   const target = iso || curDate;
@@ -1868,10 +1934,33 @@ async function patchAledo0628(){
   try{ localStorage.setItem(FLAG,"1"); }catch(e){}
 }
 
-/* One-time refresh: update existing users' standard lane labels/owners to the
-   corrected city spellings and CC 147 dual owners. Matches by lane id, only
-   touches lanes that still exist, and never resurrects removed lanes or disturbs
-   custom ones. Runs once (flagged). */
+/* One-time patch: add the yesterday's-numbers metrics block to the 7/3 AM network
+   notes on already-saved data (from the metrics image). Inserts only if not present. */
+async function patchMetrics0703(){
+  const FLAG="exp_patch_metrics_0703_v1";
+  try{ if(localStorage.getItem(FLAG)) return; }catch(e){ return; }
+  const iso="2026-07-03";
+  const d=store.days[iso];
+  if(d && d.am && d.am.net && d.am.net.indexOf("Fleet snapshot")>-1 && d.am.net.indexOf("Yesterday's numbers")===-1){
+    const block=`<p><b>Yesterday's numbers:</b></p>
+<ul>
+<li><b>Missed miles:</b> 5,233 — no-departs + OTR fill-ins.</li>
+<li><b>Missed revenue:</b> $14,129.10 (at $2.70/mile).</li>
+<li><b>MT (empty) miles:</b> 1,900 — CLDL MGIN 4448324 + KC→OK and OK→TX.</li>
+<li><b>MT mile spend:</b> $4,370.00 (avg EXP round trip 475 at $2.30/mile).</li>
+<li><b>Terms:</b> 6. Pending: CABHE1 — no car to get to work; gave him until Tuesday.</li>
+</ul>`;
+    // insert right after the Fleet snapshot paragraph
+    const marker="or we part ways.</p>";
+    const i=d.am.net.indexOf(marker);
+    if(i>-1){
+      const at=i+marker.length;
+      d.am.net = d.am.net.slice(0,at) + "\n" + block + d.am.net.slice(at);
+      await saveDays(iso);
+    }
+  }
+  try{ localStorage.setItem(FLAG,"1"); }catch(e){}
+}
 async function refreshLaneLabels0628(){
   const FLAG="exp_lane_refresh_v1";
   try{ if(localStorage.getItem(FLAG)) return; }catch(e){ return; }
