@@ -824,6 +824,7 @@ async function load(){
   await seedBrief0703();
   await seedDebrief0703();
   await seedBrief0704();
+  await seedDebrief0704();
   await seedFollowups();
 }
 
@@ -1972,6 +1973,50 @@ async function seedBrief0704(){
   if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
   store.days[iso].am.net=amNet;
   store.days[iso].am.lanes=amLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  await saveDays(iso);
+}
+
+/* One-time seed: 7/4 afternoon debrief — Holiday Impact Operations: Lane Coverage,
+   Driver Assignments, Equipment Repositioning & Yard Reporting. (Kristi led.) */
+async function seedDebrief0704(){
+  const iso="2026-07-04";
+  const existing=store.days[iso];
+  const pmHasContent = existing && existing.pm &&
+    (stripHtml(existing.pm.net||"").trim() || Object.values(existing.pm.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(pmHasContent) return;
+
+  const pmLanes={
+    cc135:`<p><b>Sean — Aurora: not running today (holiday); no report.</b></p>`,
+
+    cc152:`<p><b>Josh — 152 Indy to Kansas City: decent afternoon — 6 of 8 as expected</b> (a freight issue). Lots of the available loads were meat loads with multiple stops we can't accommodate (the extra stops). Tomorrow looks a little dead from the holiday; back to normal 8-and-8 starting Tuesday. Will coordinate with Brian in the morning. Lane went well today.</p>`,
+
+    cc148:`<p><b>Allen — 148 Indy → North Carolina: 11 of 12</b> (openings). Got all fills to the best possible — mostly expedited drivers jumping in, plus one OTR. Freight into Indy is looking light (some pushouts and cancellations), working through it. Tomorrow morning looks good — all filled through 9 AM running full (the 11 of 12 covers tonight's departures and the morning's).</p>`,
+
+    cc149:`<p><b>Brian — Bedford: 8 of 8 departs, but two are empty moves;</b> right on drivers because of two OTR fill-ins.</p>`,
+
+    cc154:`<p><b>Brian — Carlisle: 4 of 8 (open shifts); one depart is an empty move; using one OTR fill-in.</b> A Carlisle driver (JENMI1) just called in for the morning — puts us in a bind (he's on the Carlisle side, so a Bedford driver can't grab it on the way through like the reverse). His reasons: doesn't want to deal with the traffic, and says he hasn't been paid correctly since he started — but our side shows him paid correctly (five days), so possibly a bank issue to check. Brian to try to shuffle and cover; Kristi/Nate to help find options. PA-side freight/capacity has been rough all week — taking everything available.</p>`,
+
+    cc151:`<p><b>Davey — recovered nicely.</b> Was looking ~4–5 loads short between tonight and tomorrow morning; traded a few loads (helping OTR recover some) and used the North Richland → Joplin halves into Sapulpa, so running all the way full tonight. Turned tomorrow's planned local into a load all the way to Texas (no return load, since the Denton/Texas side is so short) — a lot better shape than he started. (Kudos for getting creative.)</p>`,
+
+    cc147:`<p><b>Angela/Amy (for Regina/Tyler) — Texas → California: everything running full, no delays; AM loads look good.</b> The Tucson windshield truck is stuck — road service has nobody available to come fix it at the yard, and it can't get into the shop until Monday (holiday weekend), so we're in a bind there until Monday. Moving two trucks (360377 and 360325) across to Markle/Aledo tonight, then planning to get them out to the Denton shop tomorrow.</p>`
+  };
+
+  const pmNet=`<p><b>Source:</b> 07/04 Afternoon Debrief — Holiday Impact Operations: Lane Coverage, Driver Assignments, Equipment Repositioning &amp; Yard Reporting. (Kristi led.)</p>
+<p><b>Holiday wins (TJ):</b> A lot of wins the team muscled through that we probably shouldn't have had — appreciation for everyone fighting the fight through the holiday weekend.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Tomorrow (Sunday) will be short on loads:</b> Holiday freight is thin — Josh, Allen and Brian all flagged light Indy/PA freight with pushouts, cancellations, and multi-stop meat loads we can't take. Expect a rough Sunday; volume looks back to normal Tuesday.</li>
+<li><b>Sapulpa gate reporting (new initiative):</b> The Sapulpa gate/tablet (the iPad drivers ring in on — usually four or five tablets floating around, the weekend guys keep one or two propped up) can give us automated reporting on which trucks and trailers are on the yard, instead of relying on someone walking the yard manually. Kristi to develop this; more next week — a real visibility win.</li>
+<li><b>Shift-transfer briefs:</b> Make the briefs you send to the next shift as detailed as possible so nothing gets missed heading into a short-load Sunday.</li>
+<li><b>Driver pay complaint (154):</b> JENMI1 claims incorrect pay since starting; our records show him paid (five days) — check for a bank/deposit issue rather than a payroll miss.</li>
+<li><b>Equipment repositioning (147):</b> Two trucks (360377, 360325) moving to Markle/Aledo tonight for Denton-shop work tomorrow; the Tucson windshield truck can't be serviced until Monday.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].pm) store.days[iso].pm={net:"",lanes:{}};
+  store.days[iso].pm.net=pmNet;
+  store.days[iso].pm.lanes=pmLanes;
   store.days[iso].savedAt=new Date().toISOString();
   await saveDays(iso);
 }
