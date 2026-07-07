@@ -828,6 +828,8 @@ async function load(){
   await seedBrief0705();
   await seedDebrief0705();
   await seedBrief0706();
+  await seedDebrief0706();
+  await seedBrief0707();
   await seedFollowups();
 }
 
@@ -2139,6 +2141,90 @@ async function seedBrief0706(){
 <li><b>Freight automation (Ashley):</b> Working the freight needs for the rest of this week and next; building workarounds for cancellations to get quicker visibility (like the Walmart team has) — meeting the Smithfield team this week and Carter on automations. Ping Ashley on Teams about any lane that should be EXP in the OM and isn't.</li>
 <li><b>Recruiting (Jesse):</b> Two scheduled for orientation today (one showed, one not — digging in); three more Wednesday, plus tentatively-scheduled pipeline drivers being worked in for this week or next.</li>
 <li><b>Run-full push (John):</b> Last week ran 82% full — down from the usual 85–87% (the holiday drag we expected). This week, turn it up and hit the 90s; run full as much as absolutely possible.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
+  store.days[iso].am.net=amNet;
+  store.days[iso].am.lanes=amLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  await saveDays(iso);
+}
+
+/* One-time seed: 7/6 afternoon debrief (from the AM-actuals/PM sheet). (Kristi led.) */
+async function seedDebrief0706(){
+  const iso="2026-07-06";
+  const existing=store.days[iso];
+  const pmHasContent = existing && existing.pm &&
+    (stripHtml(existing.pm.net||"").trim() || Object.values(existing.pm.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(pmHasContent) return;
+
+  const pmLanes={
+    cc135:`<p><b>Sean/TJ — Aurora: 2 of 4 AM actual; PM model 4, projected 2.</b> Short freight today (few loads cancelled/moved away — Coke, Walmart). Short-staffed tomorrow and short one load; Aurora short one shift tomorrow. The Aurora sheet is pretty much updated with current freight for the week.</p>`,
+
+    cc152:`<p><b>Bryan — IN → KC: 2 open positions; PM 8 model / 6 projected.</b> Spoke with BOWJO1 about his 5th day — it was a misunderstanding/misinformation and he's all squared away. One open shift this PM out of Indy. Have one KC hustler picking up and delivering loads. Still short KC freight going east for Friday through the weekend.</p>`,
+
+    cc148:`<p><b>Allen — IN → NC: 7 open; PM 12 model / 8 projected.</b> Got Tuesday turned around — working on a no-empties move and finding expedited drivers to fill in.</p>`,
+
+    cc149:`<p><b>Lacey — Bedford: 4 open; PM 4 model / 3 projected.</b> Two OTR fill-ins, but one is in an EXPE truck. Lost an OTR fill-in for tonight (was waiting to get the truck into the shop and hasn't slept yet). Three doing local pickups/deliveries.</p>`,
+
+    cc154:`<p><b>Lacey — Carlisle: 2 open; PM 8 model / 4 projected.</b> The MT (empty) move was intentional — to recover a load dropped due to the power-outage delay at CEYCA. Lost an OTR fill-in due to double-planning them on the KS–IN lane. Two doing local pickups/deliveries.</p>`,
+
+    cc151:`<p><b>Sara — OK→KS 8/8 PM, OK→TX 8/6 PM.</b> On the 6-of-8: one MT move was the previous load running empty (not dropping a load at JLSA for the AM depart); the other two MT moves were lack of freight. Two missing departs — the first from an open shift (driver hired, starts 07/09, ride-along); the second, there was no load at JLSA to run to Texas and the return TX load didn't make the yard.</p>`,
+
+    cc147:`<p><b>Amye (for Regina/Tyler) — CA↔TX: PM 17/17, fully staffed on drivers.</b> One OTR was planned for PTO. Good on loads. Still two bad trucks in Tucson, so we can't turn in the (Penske) truck.</p>`
+  };
+
+  const pmNet=`<p><b>Source:</b> 07/06 Afternoon Debrief (from the operations sheet — AM actuals + PM projections). (Kristi led.)</p>
+<p><b>Network totals:</b> 90 model departs; 34 AM actual; 29 PM actual (opportunity 3.625); PM 82 model / 68 projected. 15 open positions across the network.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Freight softness:</b> Aurora short on freight (Coke/Walmart cancellations) and 152 still short on KC-east freight into the weekend — the recurring KC/area-21 gap.</li>
+<li><b>Fill-in strain:</b> Lost OTR fill-ins on both PA lanes (one to a truck-in-shop/rest situation on Bedford, one to double-planning on the KS–IN lane), leaning on local pickups/deliveries to keep moving.</li>
+<li><b>Equipment (147):</b> Two bad trucks in Tucson still blocking the Penske rental return.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].pm) store.days[iso].pm={net:"",lanes:{}};
+  store.days[iso].pm.net=pmNet;
+  store.days[iso].pm.lanes=pmLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  await saveDays(iso);
+}
+
+/* One-time seed: 7/7 (Tue) morning brief (from yesterday's PM actuals / today's
+   projections sheet). (Kristi led.) */
+async function seedBrief0707(){
+  const iso="2026-07-07";
+  const existing=store.days[iso];
+  const amHasContent = existing && existing.am &&
+    (stripHtml(existing.am.net||"").trim() || Object.values(existing.am.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(amHasContent) return;
+
+  const amLanes={
+    cc135:`<p><b>Sean/TJ — Aurora: ran 1 of 2 each side yesterday (50%).</b> (AZ–Phoenix ↔ Aledo.)</p>`,
+
+    cc152:`<p><b>Bryan — IN → KC: 6 of 8 PM actual yesterday (75%); 2 open positions.</b> Still working on getting KC → Indy freight filled in for later in the week. All drivers assigned to EXPE6 have been coached from Lytx.</p>`,
+
+    cc148:`<p><b>Allen — IN → NC: 5 of 12 PM actual yesterday (42%);</b> 7 open positions. Today projected 10 AM / 10 PM.</p>`,
+
+    cc149:`<p><b>Lacey — Bedford: 6 of 8 yesterday PM (63%); 4 open.</b> 1 OTR fill-in for PM.</p>`,
+
+    cc154:`<p><b>Lacey — Carlisle: 6 of 8 yesterday PM (75%); 2 open.</b> 1 OTR fill-in for AM, 2 OTR fill-ins for PM, 1 driver call-out.</p>`,
+
+    cc151:`<p><b>Sara — OK→KS 5 of 8 (63%), OK→TX 6 of 8 (75%).</b> KC didn't run the AM shift — driver starts tomorrow (7.08). Three MT moves: one ran three shifts (7/6 PM); the other two had no return loads. On the 7/07 PM shift — one MT move; ran 3 AM departs and have 4 PM departs for 1400.</p>`,
+
+    cc147:`<p><b>Regina — CA↔TX: 16 of 17 yesterday PM (94%); today projected 17.</b> LDDA1 is live-loading with no empties. Currently short one load out of California — anticipating a tomorrow-ran load being ready early to fill that gap.</p>`
+  };
+
+  const amNet=`<p><b>Source:</b> 07/07 Morning Brief (from yesterday's PM actuals / today's projections sheet). (Tuesday; Kristi led.)</p>
+<p><b>Network totals:</b> Yesterday PM — 90 model departs, 66 actual, 8 no-departs, 3 empty moves, 3 OTR fill-ins, 67 actual (74%). Today's projections — 82 model, 39 AM projected, 43 PM projected. 15 open positions across the network.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>KC-east freight (152):</b> Still working to fill KC → Indy freight for later in the week; EXPE6 drivers all coached up on Lytx.</li>
+<li><b>151 staffing:</b> KC AM shift didn't run (driver starts 7/08); several MT moves from no return loads.</li>
+<li><b>147 (Regina):</b> Live-loading on LDDA1 with no empties; short one CA load, expecting an early-ready load tomorrow to cover it.</li>
+<li><b>PA fill-ins:</b> Carlisle leaning on OTR (1 AM, 2 PM) around a driver call-out; Bedford one OTR PM.</li>
 </ul>`;
 
   if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
