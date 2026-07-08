@@ -830,6 +830,8 @@ async function load(){
   await seedBrief0706();
   await seedDebrief0706();
   await seedBrief0707();
+  await seedDebrief0707();
+  await seedBrief0708();
   await seedFollowups();
 }
 
@@ -2225,6 +2227,105 @@ async function seedBrief0707(){
 <li><b>151 staffing:</b> KC AM shift didn't run (driver starts 7/08); several MT moves from no return loads.</li>
 <li><b>147 (Regina):</b> Live-loading on LDDA1 with no empties; short one CA load, expecting an early-ready load tomorrow to cover it.</li>
 <li><b>PA fill-ins:</b> Carlisle leaning on OTR (1 AM, 2 PM) around a driver call-out; Bedford one OTR PM.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
+  store.days[iso].am.net=amNet;
+  store.days[iso].am.lanes=amLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  await saveDays(iso);
+}
+
+/* One-time seed: 7/7 afternoon debrief — Operational Updates, Lane-Specific Issues
+   & Trailer Management. (Kristi led.) */
+async function seedDebrief0707(){
+  const iso="2026-07-07";
+  const existing=store.days[iso];
+  const pmHasContent = existing && existing.pm &&
+    (stripHtml(existing.pm.net||"").trim() || Object.values(existing.pm.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(pmHasContent) return;
+
+  const pmLanes={
+    cc135:`<p><b>Sean — Aurora: still sitting at 4 of 8, no change from this morning.</b> One departure tonight is being inspected now (waiting to hear back). Outlook for tomorrow and the rest of the week: set on loads, looking to run full starting tomorrow. Glad to be here.</p>`,
+
+    cc152:`<p><b>Brian — 152: crazy, messy afternoon.</b> Looked great (all 8 supposed to go), then loads started not being ready / not making the yard, trailers broke, and trucks were put in the shop without being reported to him. Everyone's running — no no-departs — but two out of Indy are running empty to meet the KC drivers; still moving things around. Tomorrow looks good if he can straighten out today's mess. Still needs more freight for the weekend and into next week.</p>
+<ul>
+<li><b>Broken-trailer load (Shelbyville / 3rd):</b> A load loaded on the 3rd was given to OTR (heavy freight); the trailer's landing gear was broken and the driver just put the bills back inside, so the shipper thought it was gone but we had it. Supposedly turned into roadside with an email saying it was fixed — but a driver sent to get it found the landing gear still broken and the trailer leaning. Still sitting there; more info going to roadside.</li>
+<li><b>Second load</b> came from a Shelbyville shipper, dropped late by an OTR driver; kept our driver back ~1h15 for it, and when it arrived the trailer needed tires so he couldn't take it. The OTR driver wasn't dispatched on the load, so there's no footprint to trace who it was (Nate).</li>
+</ul>`,
+
+    cc148:`<p><b>Allen — 148 Indy → North Carolina: four total no-departs this morning</b> (two Indy→Jackson, two Mount Airy) — caused by <b>two overweight Gatorade loads</b>: couldn't drop them to grab the available loads, so drivers had to turn around. Got the driver with the one Gatorade load to take it to the yard once done, and he's picked up a couple more to preload — ahead of schedule on that piece. Everything else full and good on freight; planning 8 of 12 tonight. (Gatorade overweight was caught at the scale next door; a plant fire drill and the guard not letting them drop-and-hook compounded it — a one-off so far.) Six open positions; one in orientation today.</p>`,
+
+    cc149:`<p><b>Lacey — Bedford: went pretty okay.</b> A trailer for the 1800 depart kept throwing codes (door not fully shut) — Indy shop sending a trailer tech; if it checks out it runs at 2100 (a Smucker's load passed from the other expedited lane). Needs some PA freight for the rest of the week — mostly tracking it and getting it to the yards before it cancels.</p>`,
+
+    cc154:`<p><b>Lacey — Carlisle: rough today — had three OTR fill-ins and lost all three</b> (one on hours, one needed the shop and didn't want to take one of our trucks, one tired after waiting on his Uber/hotel — runs tomorrow AM). A Smithfield load at 1600 was ~300 lbs overweight (waiting on the driver's scale ticket). Bright side: construction is done, so the temporary swap point ends — switching back to Go-Mart in Moore City tomorrow.</p>`,
+
+    cc151:`<p><b>Sarah — AM 7 of 8; PM dispatched and looking good at 8 of 8, one empty move</b> (three departing on the 2 AM vs. four on the 2 PM). KC ran 7 of 8 drivers but had three empty segments — a domino from the prior day's freight (couldn't get those loads, had to run empties). Tomorrow: one half-empty segment (pick up a load in Olathe, drop at Sapulpa/JLSA for a team to deliver to California) to avoid two empty moves and save service. Freight: Thursday needs another Kansas load — nothing in area 21; drivers wouldn't give up Texas loads. Root cause: no expedited freight was pulled aside for the 9th, so the freight was already committed to other trucks (takeaway for Ashley — give more days' notice to earmark).</p>`,
+
+    cc147:`<p><b>Regina — full parts out of Texas and California; full planned tonight out of California.</b> Main concern is the <b>trailer pools</b>: substantial needs from both Sunnyvale and Lineage.</p>
+<ul>
+<li><b>Lineage</b> (loads Mon–Fri only): five loads to pick up Friday, so needs ≥5 empties there by Thursday EOD. Update mid-call: now four empties at Lineage, needs ~two more (one Friday load doesn't run until Saturday but still loads Friday).</li>
+<li><b>Sunnyvale:</b> two trailers there now; needs 3 on the 9th, 4 on the 10th, and 7 of the 9 loads on the 11th (T here is 7 on fleet/expedited). Limited weekend pickup hours; if a trailer isn't there 2 hours before load start, ~$350 late fee (we've paid a lot of those lately). Netting drivers taking empties in, needs ~5 trailers by the 10th for Sunnyvale. Freight planned through Sunday AM.</li>
+</ul>`
+  };
+
+  const pmNet=`<p><b>Source:</b> 07/07 Afternoon Debrief — Operational Updates, Lane-Specific Issues &amp; Trailer Management. (Kristi led.)</p>
+<p><b>Morning result:</b> Ran 78 of 90 departures across the board (~87%) — the new segment-level number we're starting to track.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Unreported bad trailers (Denton):</b> Drivers dropping trailers and finding something wrong aren't reporting it to the shop, so the BI/trailer report is only accurate once someone physically walks the yard — found at least five unreported bad trailers in Denton today alone. Travis working with Fisher on designating someone to check the yard (ideally the Denton tire guy who's already touching trailers); the real fix is drivers reporting it. On Kristi's list.</li>
+<li><b>Stale trailers (Denton):</b> Two worked out today, but a ton remain — impact minimal so far.</li>
+<li><b>Trailer pools (147):</b> Sunnyvale + Lineage both need empties this week (unusual to struggle with both at once) — all eyes on it to avoid the ~$350/late-trailer Sunnyvale fees.</li>
+<li><b>Freight earmarking:</b> The 151 Thursday gap came from expedited freight not being pulled aside far enough in advance. As lane Excel sheets are restructured, give Ashley a count several days out; Ashley automating ~201 outlier lanes into EXPO M to hold capacity for expedited to accept/decline.</li>
+<li><b>Recruiting (Jesse):</b> Six drivers scheduled for Indy next week (mostly Monday, plus one Wednesday in NC) — two are rehires ("grass wasn't greener"). Openings ~9–11 depending on how the six and Bobby Jones (148, in class today) land. First day with a full recruiter staff — busy. Orientation now run by one consistent voice (Tiffany, with Amy listening for coaching) for a consistent message.</li>
+<li><b>Retention:</b> Still tracking toward zero terms — the two at-risk drivers look saved (Lacey's late-truck driver is good, running 5 AM tomorrow).</li>
+<li><b>Freight (Ashley):</b> Getting a daily cancellations report (via Carter) and carving out the expedited ones to pull off the sheet quickly until EPM — faster visibility instead of finding a dead load days later. Shout-out to Ashley for the ~201-lane EXP-at-tender earmarking.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].pm) store.days[iso].pm={net:"",lanes:{}};
+  store.days[iso].pm.net=pmNet;
+  store.days[iso].pm.lanes=pmLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  await saveDays(iso);
+}
+
+/* One-time seed: 7/8 morning brief — Performance Review, Reporting Changes &
+   Staffing. (Kristi led.) First day counting individual segments. */
+async function seedBrief0708(){
+  const iso="2026-07-08";
+  const existing=store.days[iso];
+  const amHasContent = existing && existing.am &&
+    (stripHtml(existing.am.net||"").trim() || Object.values(existing.am.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(amHasContent) return;
+
+  const amLanes={
+    cc135:`<p><b>Sean — Aurora: a few issues already this morning; looking at 5 of 8.</b> One load delayed to the yard for the AM shift (Phoenix side); a cracked frame in multiple spots not passing inspection (Texas side); and an ABS light on another load not yet fixed (will likely miss this morning's part). That's three loads that can't run this morning, leaving one for the AM departure. For the PM, one load dropped in Denton instead of Aledo — Brad working to get it down ASAP. Last night ran 1 of 4 (a Waco load cancelled on the Texas side; an Arizona load missed departure).</p>`,
+
+    cc152:`<p><b>Josh — 152: yesterday PM 8 of 8, two of them empty moves</b> (both Indy side — a preloaded Pepsi trailer that needed tires at the shipper, and a Kroger load that arrived with an OTR guy needing tire work; trip numbers/customers in the notes). This morning 6 of 8 — an open shift on the Indy side (all open shifts are Indy right now). This afternoon projecting 8 of 8, everybody loaded, no empty moves, all loads projected to reach the yard.</p>`,
+
+    cc148:`<p><b>Allen — 148 Indy → North Carolina: PM ran 5 of 6 departs</b> (one open shift, Indy→NC); AMs running full. Tonight looking at 5 of 6 (one set still needs personnel; hunting an expedited fill-in). Reported as 5 and 5 in the new segment view. Loads looking good.</p>`,
+
+    cc149:`<p><b>Lacey — Bedford: ran full last night; planning two short today.</b> Also an empty move this morning — a load didn't make the yard in time (driver 340135 wouldn't get rolling despite seven wake-up calls from Chelsea; now rolling, but the load won't reach the yard until later today).</p>`,
+
+    cc154:`<p><b>Lacey — Carlisle: only one actual depart last night.</b> Already down, then a truck broke down midway to the swap point and had to be towed, so the other driver was turned around (no depart) — and short another truck (in the shop). Sent two Carlisle drivers without swap partners to Bedford to grab a truck so both could run full this morning.</p>`,
+
+    cc151:`<p><b>Joe — last night 8 of 8 with one empty move</b> (no 2 AM version of that lane — an open lane, now filled, ran this morning). This morning 8 of 8 with one empty move (a load showed T-called at the Denton yard but was never actually picked up, so moving that empty back). This afternoon: one no-depart (took its load to cover the returning empty) and one empty move on the 4 PM (a load coming back to Sapulpa will depart from Sapulpa, not go all the way to Denton — a Olathe load dropped at Sapulpa for a team to run to Colton, CA, instead of an empty move).</p>`,
+
+    cc147:`<p><b>Tyler — 147: ran full to parts; one OTR fill-in (from yesterday morning).</b> One empty move Quartzsite → San Bernardino (load ended there, nothing to bring back to CA). Finally getting the rental turned in — truck 360344 is ready; dropping off 360370 for a windshield, returning the Penske; trying to get the PM done on 340039 back to Denton. Short one California load this morning but has options (recovered fine yesterday). An overweight Texas load bound for Arizona (only overweight on the CA hole) is being re-scaled to make legal — was an OTR driver who scaled it; Amy confirms it now looks CA-legal.</p>`
+  };
+
+  const amNet=`<p><b>Source:</b> 07/08 Morning Brief — Performance Review, Reporting Changes &amp; Staffing. (Kristi led.)</p>
+<p><b>Reporting change — counting segments:</b> We now count actual departs from each location individually rather than rolling a lane's two sides into one. So a lane like Sapulpa can show up to four no-departs where before it was two — the numbers look bigger today on purpose, so we can pinpoint where issues and opportunities actually are. New optional issue markers: mark a segment yellow (at risk) or red (bad) — manually, at the segment level. The blue projected numbers carry over from what each lane projected at the prior PM brief.</p>
+<p><b>Fleet snapshot (Lyndi):</b> 91 trucks yesterday, 683 miles/truck (inflated — a couple trucks went in for B service, one uncounted truck was brought in, plus an add and a return). 11 open shifts; several new hires on the schedule for Monday/Wednesday. Opportunities: 32 yesterday (looks large because of the new segment counting). 3 down trucks; 4 autonomous departures (Sean). New severe at-risk driver on the 151 Oklahoma lane — after many conversations and a shift change to appease him, he called out his Wed/Thu shifts; on a final warning. Lytx: 32 coachings, 8 overdue — get on those today. Rosie moved off the top spot (improvement), but repeat offenders remain on the top five — need serious conversations. With 32 opportunities, a lot of money left on the table plus a lot spent hauling air.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>EXP freight filtering (Lyndi/Ashley):</b> Filter the planning screen so the first OM is EXP. Of the ~201 lanes earmarked for expedited: filter by EXP; if we want it and have room, change to EXPE; if we can't cover it, get it back to OTR ASAP by removing EXP from the OM (don't leave EXP on and fail the load by holding too long). Ashley pushing this through Freight Science so it's automated.</li>
+<li><b>Service / slow down to speed up (John):</b> Yesterday a load delivering in the Indy area was marked "passed to next lane" but was actually a capacity issue — double-check work and service everything we can. Do whatever we can to run full and cut empty moves; reach out to John for team help dropping a load. Cancellations continuing in the Belvedere area this morning.</li>
+<li><b>Recruiting (Kia/Jesse):</b> 10 openings still available; a nice-sized class next week — eight scheduled so far (six out of Indy), already scheduling the following week. Indy orientation not started yet (new staff trains in Denton first; Jenna setting up the location — express/expedited focused, not full-fledged).</li>
+<li><b>New lane — Farmer's Dog (Brian):</b> New lane out of Burleson, TX (mix of Dallas/Burleson) to San Leandro, CA; a drop going in soon to turn it from B into A freight (preloads). Expedited/teams/Sean will split it.</li>
+<li><b>Spot board (Brian/Lyndi):</b> If booking a load 3–4 days out, book it — the network is short. Live loads on the spot board rely on OTR regional to pick up and bring in; preloads (e.g. Tyson out of Olathe) are better. Use the "Northern Lanes Daily Load List" (by lane) to see actual needs; Lyndi to send it to Brian and walk the tabs.</li>
 </ul>`;
 
   if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
