@@ -838,6 +838,8 @@ async function load(){
   await seedBrief0710();
   await seedDebrief0710();
   await seedBrief0711();
+  await seedBrief0712();
+  await seedDebrief0712();
   await seedFollowups();
 }
 
@@ -2603,6 +2605,93 @@ async function seedBrief0711(){
   if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
   store.days[iso].am.net=amNet;
   store.days[iso].am.lanes=amLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  await saveDays(iso);
+}
+
+/* One-time seed: 7/12 morning brief — Operations Status, Trailer Issues, Capacity
+   Gaps & Load Cutoffs. (Kristi led; Sunday.) */
+async function seedBrief0712(){
+  const iso="2026-07-12";
+  const existing=store.days[iso];
+  const amHasContent = existing && existing.am &&
+    (stripHtml(existing.am.net||"").trim() || Object.values(existing.am.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(amHasContent) return;
+
+  const amLanes={
+    cc135:`<p><b>Sean — Aurora: ran 5 yesterday</b> (one departure didn't leave — trailer issues). Today better: projected ~7 of 8 (the one missing is a load given to expedited so they can stay running full). Everything's at the yard except one load and getting inspected with plenty of time to fix issues. Needs one more load for the morning of the 16th (found one of the two he needed). <b>Call-out:</b> a CSR messaged Friday that a load canceled — it actually didn't; found it at the yard today still marked for Aurora. Could've been a mess if not caught — worth flagging in the cancellation process (Sean circling back on how it happened).</p>`,
+
+    cc152:`<p><b>Brian — Area 152: running 4 of 8 this morning.</b> One shop trailer got fixed to run; one still in the Indy shop (bigger issue, may not be fixed); and the one broken down at the shipper yesterday still needs feedback to get out of there (the dolly-leg-issue trailer — Kristi following up). Projected 6–7 of 8 this afternoon (short a shift in Indianapolis). Freight looks light Thursday on, and Monday doesn't look good either — fine-combed it, not much to take; back half of the week really short. Commitment: fill the sheet out as best he can with loads tracked.</p>`,
+
+    cc148:`<p><b>Alan — 148 Indy → North Carolina: yesterday ran 6 (12 shifts / 12 loads with one OTR;</b> another OTR fell out, handled). This morning 6 of 6, full with one OTR fill-in; tonight 5 of 5 with the open gaps. Stayed late and planned everything up through Wednesday, including adjusting for the Belvedere cancellations already. Pairing open shifts so he doesn't have to run two OTRs — trying to get one Indiana + one North Carolina driver to work an extra lane (hard to pair on hours). Day 12 of a long stretch — looking forward to a great handoff.</p>`,
+
+    cc149:`<p><b>Lacey — Bedford: running full this morning (one expedited fill-in); 6 of 8 tonight.</b> Last night a driver (the older Derek — OLDER1) threatened driver retention and threw legal language over a load with a low tire that wasn't weighed, wanting extra money for the inconvenience and for having to do the (May) monthly safety training — he was the last in all of expedited to complete it. Told him firmly that weighing a load, fixing a low tire, and mandatory safety training aren't extra-pay items. Then his truck broke down ~100 miles out of Bedford (likely radiator) and was towed back; turned his swap partner around and had an OTR recover the load in Indy. May be a turnover risk / possibly a healthy term — Lacey to feel him out today (he's a 2100 driver, sleeping now). <i>(Allen's background: Derek is a 100% retired veteran, respond well to a direct, firm, military-minded approach; often asks about VA appointments. Kristi to have Lyndi or John call him too.)</i></p>`,
+
+    cc154:`<p><b>Lacey — Carlisle: 6 of 8 this morning (one OTR fill-in); 4 of 8 this afternoon</b> (two on each side). Didn't try hard for fill-ins because we don't have the freight to support it right now — we have freight, it's just not getting to the yards in time. Has three PA locals tonight who can help.</p>`,
+
+    cc151:`<p><b>Sarah — 8 of 8 PM last night; 8 of 8 this morning.</b> The <b>Madison load</b> (loaded early) has been hard to get a truck on (capacity) — pushed to PM; latest it can run and still deliver is tomorrow morning. Really needs help finding a truck to get it to the KC yard by ~6–8 AM tomorrow (Tyson team following up — a driver messaged after midnight that it wasn't ready, though the POA said ready Friday). Texas: two Sunnyvale loads weren't picked up on time (shipper closed early; truck issues) — moving both to PM on their reschedule plans (one already picked up; the other's driver hunting an empty, aware of the 1300 cutoff).</p>`,
+
+    cc147:`<p><b>Tyler (Regina back this afternoon) — 147: nothing changed from yesterday's recap.</b> One empty move today Quartzsite → San Bernardino (a delivery in Arizona). Still needs freight for the 16th (nothing found yet — hoping Monday). Still working the <b>Fresh Pet</b> load that caused yesterday's domino — moved to tomorrow's PM depart to give them time to load it. Two OTR drivers picking loads today (one Fresh Pet, one Lineage in Dallas) — no empty trailers, and the 1300 Fresh Pet cutoff makes it a challenge (needs two empty trailers in Dallas; Kristi/Tony helping locate).</p>`
+  };
+
+  const amNet=`<p><b>Source:</b> 07/12 Morning Brief — Operations Status, Trailer Issues, Capacity Gaps &amp; Load Cutoffs. (Sunday; Kristi led.)</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Cancellation process (Aurora call-out):</b> A load reported canceled Friday hadn't actually canceled — found at the yard still marked for Aurora. Flag for the cancellation process so a miscommunicated "cancel" can't strand a real load; a key piece to tighten for next week.</li>
+<li><b>Trailer issues / empties:</b> 152 has shop trailers and the dolly-leg trailer stuck at the shipper (Kristi following up); 147 needs two empty trailers in Dallas for the Fresh Pet / Lineage picks against a 1300 cutoff (Kristi + Tony locating). Trailer availability is the recurring pinch.</li>
+<li><b>Northeast capacity / freight to the yard (149/154):</b> We have freight but it's not reaching the yards in time — the northeast is the problem area; today is Andrea's first day planning it (Alyssa piggybacking — Travis to confirm; put both on any communication). More regionals should ease it; three PA locals helping tonight.</li>
+<li><b>Weekend/early-week freight short:</b> 152 light Thursday on and Monday; 135 and 147 still need loads for the 16th. Keep marking freight ahead and fine-combing the boards.</li>
+<li><b>Driver handling (149):</b> The Derek/OLDER1 situation — hold firm on what's part of the job (weighing, low-tire fixes, mandatory safety training aren't extra pay), lean on Allen's/Bonnie's history with tenured drivers, and have a second voice (Lyndi/John) reinforce alignment. Reach out to prior lane leaders for insight on long-tenured drivers.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
+  store.days[iso].am.net=amNet;
+  store.days[iso].am.lanes=amLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  await saveDays(iso);
+}
+
+/* One-time seed: 7/12 afternoon debrief — Driver Incidents, Fleet Operations &
+   Recruiting. (Kristi led.) */
+async function seedDebrief0712(){
+  const iso="2026-07-12";
+  const existing=store.days[iso];
+  const pmHasContent = existing && existing.pm &&
+    (stripHtml(existing.pm.net||"").trim() || Object.values(existing.pm.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(pmHasContent) return;
+
+  const pmLanes={
+    cc135:`<p><b>Sean — Aurora: nothing changed from this morning — running 7 of 8.</b> The one missing is the load given to expedited. Everything passed inspections and got to the yard in time; worked out perfect today. (Sheet to be updated tonight.)</p>`,
+
+    cc152:`<p><b>Brian — Area 152: was supposed to run 6 of 8, ending at 4.</b> One KC call-in (sick — not a frequent one). Another driver showed up, found his truck/trailer blocked in, and just went home without telling anyone (Brian only reached him ~5–10 min before the call). A KC hustler who came in at 2300 to load finished ~5:30 and left at 5:45 on the night shift's say-so without telling Brian, who had more work for him. Some Pepsi loads that should've loaded on the 10th still aren't ready. Tomorrow 4, possibly 6, at 8 AM (depends on another Indy driver). Freight filling in decently up to Saturday. <i>(Kristi's point: these expedited drivers are paid better than many OTR drivers — hold them to a higher standard; send her the driver's number to follow up.)</i></p>`,
+
+    cc148:`<p><b>Alan — 148: running 5 of 5 tonight and 5 of 5 in the morning</b> (one open position with one OTR; still waiting on fill-ins). Drivers complaining a lot about the yard — Alan cushioning and calming them. Planned up through Wednesday, loads double-checked. Pepsi/Gatorade loads haven't come in yet — needs some minor loads to fill Thursday on. Good handoff to Bonnie for the morning as Alan heads into well-earned time off (moved everything EXP → EXPE or back to EOR to avoid overfilling; Lyndi added the last bits held for the new-hire week).</p>`,
+
+    cc149:`<p><b>Lacey — Bedford: 4 of 8 tonight.</b> A doozy of a day — big struggle getting loads to the yards (less-departure days feel like triple the work). Had to run an empty move tonight (no loads even close right now; tracking them in). Capacity is the issue — worked with Andrea a bit on her first day on northeast planning. Has three PA locals (two delivering loads to final, one picking up to run tomorrow morning).</p>`,
+
+    cc154:`<p><b>Lacey — Carlisle: 5 of 8 tomorrow morning looks okay</b> — it's the PMs where they struggle, and that can change with the load situation (has loads; it's getting them to the yard in time). (Kristi keeping the yard/freight issue on the radar — problems with it all weekend.)</p>`,
+
+    cc151:`<p><b>Sarah — AMs ran fine (8); all PMs running.</b> A few Kansas issues for tomorrow (already discussed with Lyndi): a driver picking up in area 4 hit an OS&D trailer situation on the previous load (dropped the OS&D trailer), so late to the shipper — live load, clock ticking, may not make the yard tomorrow AM. A load canceled today with no replacement found (didn't know until she called for loaded status — Tyson CSR said "whoops, canceled") → one empty move. A gambled-on Tyson load (long DDT, usually loads Fri/Sat) didn't load — watching for a tomorrow-afternoon depart. Plus the area-7 team load that missed pickup (maybe loading Monday). Likely <b>two empty moves Monday</b>, but can shift loads down to PM shifts to cover without impacting delivery. Freight otherwise booked pretty solid (a couple Thursday KC/PM holes she's not worried about).</p>`,
+
+    cc147:`<p><b>Regina — 147: full depart on everything.</b> One empty move in the morning (Quartzsite → San Bernardino, from an Arizona delivery). Good on freight — found some that just needed pulling over (to add to the sheet); covered at least through Saturday, improved from this morning.</p>`
+  };
+
+  const pmNet=`<p><b>Source:</b> 07/12 Afternoon Debrief — Driver Incidents, Fleet Operations &amp; Recruiting. (Kristi led.)</p>
+<p><b>Derek Olson towing incident (learning example):</b> The Bedford driver (Derek Olson / OLDER1) who was upset last night — Kristi had a good conversation and he's over it (not expected to term). What happened: his radiator blew ~30 minutes from origin; he bumped it to a gas station (where he used to work). Road service towed the <b>truck</b> almost 100 miles to the dealership <i>before</i> the trailer, leaving him sitting with the trailer at the truck stop for hours (~9 hours total). His frustration: they could've run him the 30 minutes back to Bedford so the load and driver were both handled. He sent messages that weren't okay and owned that (apologizing to Chelsea/Deanna). Fleet road support told him his dispatcher made the tow call; she says she didn't — Earl is pulling the road-service call to investigate. Lesson: prioritize the driver and the load over a broken-down truck, and dig deeper before assigning blame; fix the process, not people. (Kristi to have the same conversation with road service; asked to be added to the road-assist chat.)</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Driver discipline / higher standard (Brian's 152 examples):</b> A driver who left the yard without a word, and a hustler who left on the night shift's say-so mid-task. These expedited drivers are paid better than many OTR drivers — if they want the role, hold them to that standard; make it a focus of conversation this week. Kristi to follow up with the driver directly.</li>
+<li><b>Yard congestion / freight to yard:</b> Still the weekend's running problem (Indy and KC), driving 148 driver complaints, Lacey's empty move, and capacity strain on northeast planning (Andrea's first day; be patient with her).</li>
+<li><b>Cancellation process (again):</b> Sarah's Tyson load canceled without notice (found only when she called) — reinforces the Aurora cancellation-process callout from this morning; send Kristi the load numbers to follow up.</li>
+<li><b>New-hire class (starts tomorrow):</b> Kristi ~halfway through welcome calls (six still to reach) — some excited, some indifferent. Shared concern about finding that many that fast and the quality; she's scoring each on a score sheet (initial impression, understanding of the role) and will re-score at onboarding. TJ's question — are we selling it right (OTR job, home every night)? A couple didn't fully get that; most did or will ask at orientation. Getting spots filled is the key to running full next week.</li>
+<li><b>Freight outlook:</b> 147 good through Saturday; 151 booked fairly solid with minor Thursday holes; 152 filling to Saturday; 148 needs Pepsi/Gatorade for Thursday on (expected Monday).</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].pm) store.days[iso].pm={net:"",lanes:{}};
+  store.days[iso].pm.net=pmNet;
+  store.days[iso].pm.lanes=pmLanes;
   store.days[iso].savedAt=new Date().toISOString();
   await saveDays(iso);
 }
