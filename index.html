@@ -841,6 +841,7 @@ async function load(){
   await seedBrief0712();
   await seedDebrief0712();
   await seedBrief0713();
+  await seedDebrief0713();
   await seedFollowups();
 }
 
@@ -2741,6 +2742,55 @@ async function seedBrief0713(){
   if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
   store.days[iso].am.net=amNet;
   store.days[iso].am.lanes=amLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  await saveDays(iso);
+}
+
+/* One-time seed: 7/13 afternoon debrief — Operations Update, Staffing & Logistics.
+   (Kristi led.) */
+async function seedDebrief0713(){
+  const iso="2026-07-13";
+  const existing=store.days[iso];
+  const pmHasContent = existing && existing.pm &&
+    (stripHtml(existing.pm.net||"").trim() || Object.values(existing.pm.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(pmHasContent) return;
+
+  const pmLanes={
+    cc135:`<p><b>Sean — Aurora: one load didn't make the yard for the PM shift.</b> The load running out of Aledo tonight is a BAR-S load that should've preloaded at 9 AM — the driver showed at 10 AM and wasn't loaded until ~4:37 PM (nearly all day; possibly a trailer issue) — he has ~2.5 hours left and it's about an hour over Toledo, so he should make it. Phoenix side's two loads good, awaiting inspections but making the yard. Running 5 or 4 depending on the Aledo load. The Aledo miss traced to a load that should've picked up yesterday, planned this morning with deadhead plus a couple hundred miles to the yard. Everything running tomorrow out of Texas picks up tonight, so it stages well.</p>`,
+
+    cc152:`<p><b>Brian — Area 152 KC to Indy: running 6 of 8 this afternoon, all loads made the yard — smooth.</b> Had a call-in but a scheduled hustler plugged it; 6 of 8 again tomorrow morning (open shifts in Indy are the cause — KC would've been over if everyone showed, but one sick call-in plus the driver who left the yard yesterday). Watching one Indy load to confirm it reaches the yard. Wed/Thu look good; filling Friday/weekend. Equipment: drivers keep finding trailer problems and putting trucks into the shop at end of shift without telling him (shows up as shop-status when he plans the next driver). Had KC drivers photograph the yard (sent by email) — there's plenty of off-site parking in KC that isn't being utilized; may start using it.</p>
+<p><i>Diego (the driver who left the yard yesterday) was saved — he has a personal issue (dad in the hospital, called in twice for it); wants to return, so that shift isn't open. Note (Richard): the KC remote/off-site yard is for stashing sold trailers — keep active loaded trailers in KC proper; Fred moving sold trailers to the "sold lot."</i></p>`,
+
+    cc148:`<p><b>Bonnie — 148: all expedited drivers for the PM;</b> not running one 1800 pair (open shifts in Indy and North Carolina). Freight looks really good — planned all the way to Saturday. Will have some OTR fill-ins for tomorrow AM and PM. New drivers starting this week will go on her sheet and be kept busy once they clear.</p>`,
+
+    cc149:`<p><b>Brian — Indy → Bedford: 7 of 8 departs.</b> One tonight may be a little late — a trailer tire blew out right before it got back to the yard (waiting on road service). Just got word one load may not be picked up tonight (OTR side) — looking at it after the call. (That PA load is a Simmons load in Delaware — the driver's been there since 11 AM, still not on a door; they say 30 more minutes, but likely runs in the morning.)</p>`,
+
+    cc154:`<p><b>Brian — Indy → Carlisle: 6 of 8 departs</b> (two running local because there are no Indy drivers to meet with — open seats still the issue). This morning's ND→PA save: a driver who was supposed to turn around kept driving, so he left his trailer in Ohio and a night-shift PA driver without a swap partner grabbed the load to keep it moving. One driver starts tomorrow, more later this week — tomorrow projected 8 of 8 all the way through.</p>`,
+
+    cc151:`<p><b>Joe — one empty move this morning</b> (a load to be preloaded at Hostess in Edgerton, KS had loading issues and wasn't ready, so the driver ran empty; took that load to an open afternoon slot). This afternoon two empty moves — one lack of freight (Kansas South / Kansas → Denton), one from not picking up this morning's load. After tomorrow morning there's one leftover empty move; then only needs three more loads to get through Saturday (looking good). <i>(Ashley to look at helping; and to Barry — need more one-pick/one-drop freight on this lane; lots of 2–4-delivery Texas loads are becoming a service issue.)</i></p>`,
+
+    cc147:`<p><b>Regina — California/Texas: nothing changed from this morning</b> (the one OTR fill-in). Two empty moves today back to San Bernardino from Quartzsite (Arizona deliveries); one OTR fill-in Quartzsite → Tucson (a company driver, covering a driver off). Still needs freight: the <b>ten expedited-planned Coke loads canceled this week</b> (part of a 15-load Coke cancellation from a supply-chain disruption — not just us) — shifted things and found other freight, but still short two loads for the AM run on the 16th (reached out to Matt Antis). At max capacity on what she can move; has Fresh Pet on there and is running freight the same day it picks up given the canceled loads (no usual wiggle room this week).</p>`
+  };
+
+  const pmNet=`<p><b>Source:</b> 07/13 Afternoon Debrief — Operations Update, Staffing &amp; Logistics. (Kristi led.)</p>
+<p><b>Expedited SharePoint site is live:</b> Now up and operational — "who we are," day-shift info, the expedited lanes, and (most importantly) orientation materials: the checklist and an auto-populating <b>welcome letter</b>. Pick your lane and it fills in the people on that lane, the home yards, the primary swap point, the fuel stops, your fleet's phone number, and an FAQ — you just add the driver's name and start/end times, then print/save and email as usual. Everyone should have access (including call guests) — flag Kristi if not, or if something's missing to add.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Coke cancellations (147):</b> 15 Coke loads canceled from a supply-chain disruption (10 of them expedited-planned) — industry-wide, nothing we could have prevented; Coke sent apologies. Ashley to push for earlier feedback in the future. Left 147 short two loads for the 16th.</li>
+<li><b>Miles / empty moves (Nate/TJ):</b> ~4,300 miles ahead of yesterday at this time, but the empty moves will hurt — do whatever we can to run full tonight and hand off cleanly (make sure the night crew knows which extra loads are in the yard or when they'll arrive). Hoping Driscoll's teams add miles tonight.</li>
+<li><b>Driscoll's bid (Richard):</b> A three-hour Driscoll's meeting tomorrow for the fall/winter bid — bidding enough to keep the trailers there through the off-season and run below ~80. Send Richard any items/changes you'd like raised with them.</li>
+<li><b>OTR casuals / backup drivers (Richard):</b> Push to never run a lane empty — line up OTR casuals/ambassador-style backup drivers (like Laredo) who can jump in for a week or an emergency; Jesse to look at whether we can hire that pool. Kristi added to the list; John/TJ to explore.</li>
+<li><b>KC yard (Brian/Richard):</b> Off-site KC parking is underused; can be used for staging — but the remote yard is for <b>sold trailers</b>, so keep active loaded trailers in KC proper (Fred moving sold trailers to the "sold lot").</li>
+<li><b>Broken-equipment reporting (152):</b> Drivers putting trucks into the shop at end of shift without telling the DL (shows as shop-status when planning the next driver) — needs tightening.</li>
+<li><b>SharePoint / tooling &amp; process:</b> Action items that only hit one inbox (birthdays, SIPs) go unanswered when that person's off — Kristi working with Hayden to fix routing (tied to the RDO work). A shared-workspace license idea (extra licenses) to give the whole expedited team one collaborative space — Kristi scheduling a walkthrough (and looping the planning team with Travis).</li>
+<li><b>Staffing:</b> Three scheduled Wednesday (all Mount Airy NC). Remaining open: one Indy driver for 154; an Indy driver and a Mount Airy NC driver for 148; and KC/152 (one scheduled Monday, likely still needs a second — stretches into next week). ~4 of the 22 still unspotted.</li>
+<li><b>Handoffs (John):</b> Clear, clean handoffs to the night crew tonight — list any backed-up/extra loads so the 9 PM listen-in team can help.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].pm) store.days[iso].pm={net:"",lanes:{}};
+  store.days[iso].pm.net=pmNet;
+  store.days[iso].pm.lanes=pmLanes;
   store.days[iso].savedAt=new Date().toISOString();
   await saveDays(iso);
 }
