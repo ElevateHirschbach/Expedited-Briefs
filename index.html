@@ -840,6 +840,7 @@ async function load(){
   await seedBrief0711();
   await seedBrief0712();
   await seedDebrief0712();
+  await seedBrief0713();
   await seedFollowups();
 }
 
@@ -2692,6 +2693,54 @@ async function seedDebrief0712(){
   if(!store.days[iso].pm) store.days[iso].pm={net:"",lanes:{}};
   store.days[iso].pm.net=pmNet;
   store.days[iso].pm.lanes=pmLanes;
+  store.days[iso].savedAt=new Date().toISOString();
+  await saveDays(iso);
+}
+
+/* One-time seed: 7/13 morning brief — Operations Meeting: Performance, Staffing &
+   Yard Congestion. (Kristi led; Monday.) */
+async function seedBrief0713(){
+  const iso="2026-07-13";
+  const existing=store.days[iso];
+  const amHasContent = existing && existing.am &&
+    (stripHtml(existing.am.net||"").trim() || Object.values(existing.am.lanes||{}).some(v=>stripHtml(v).trim()));
+  if(amHasContent) return;
+
+  const amLanes={
+    cc135:`<p><b>Sean — Aurora: ran 6 yesterday.</b> Last night was set for 7, but one load didn't depart due to a dust storm on I-10 — running it this morning (worked out, since one of the morning loads is now being run on expedited). The other two missing today were loads expedited needed on the southern lane (gave those over). Looking at 6 of 8. Three of four Arizona loads already at the yard, the other tracking well. Two loads out of Olinto still not planned as of earlier — circling back with the planning team to get trucks on them quickly.</p>`,
+
+    cc152:`<p><b>Brian — Area 152 (KC to ND): supposed to run 4 overnight — ran 3 expedited + 1 OTR fill-in.</b> One driver was on vacation that wasn't on the schedule (so an OTR filled). Looking at 6 of 8 this afternoon. A KC driver who was sick yesterday is sick again today; plus an Indy open shift. Freight okay (needs a couple Indy loads for tomorrow). Biggest issue: the mess at the KC and Indy yards and driver frustration — feels like we're losing drivers left and right. Commitment: going down to Kansas City this weekend to look at the yard for ideas (and take pictures).</p>`,
+
+    cc148:`<p><b>Bonnie — 148: a couple of Dover loads canceled (removed from the sheet, looking for Indy freight).</b> One OTR driver this morning running 5 of 5; some open shifts. Good for all AM; PM almost all planned, AM half planned — the Belvedere loads that were tomorrow-AM loads need replacements. Big shout-out to Alan for an amazing handoff — "the best Monday ever."</p>`,
+
+    cc149:`<p><b>Brian — Indy → Bedford: 6 of 8 departures this morning.</b> Jaron had notes saying he called in and went home (an issue with his daughter) and they'd shuffled and given a load back to OTR — but he's actually at the swap point (Brian caught it just before the call), so working to get that load back and keep moving (possibly a driver-code mix-up — Brian to confirm and report back).</p>`,
+
+    cc154:`<p><b>Brian — Indy → Carlisle: 6 of 8, both open seats.</b> A bunch of new drivers start this week, which should help line it out. Goal today: get everything straightened out and moving.</p>`,
+
+    cc151:`<p><b>Joe — 8 of 8 on the morning shifts.</b> This afternoon: an empty move on the 2 PM shift (a load canceled) and one possible empty move on the 4 PM (working to get it to the yard in time — thinks it'll work, so likely only one empty move). The empty move is Kansas City → Denton. (Brian watching for any KC → Denton freight to hand Joe.)</p>`,
+
+    cc147:`<p><b>Regina (covering for Angela) — 147: not fully filled out yet.</b> San Bernardino → Quartzsite ran with an OTR team — an expedited driver started his shift but got sick at Colton, so dropped the load back at the yard and the team is running it out (hence the one OTR fill-in); gave the team one planned expedited load and grabbed the Levine load Sean mentioned, so still full on freight. PM projected full, but likely empty moves this afternoon/evening from Arizona deliveries. Full on freight for the week; concern is local/OTR truck availability to get loads picked up (working with planners; truck 230165 gave some pushback). Lytx caught up yesterday.</p>`
+  };
+
+  const amNet=`<p><b>Source:</b> 07/13 Morning Brief — Operations Meeting: Performance, Staffing &amp; Yard Congestion. (Monday; Kristi led.)</p>
+<p><b>Fleet snapshot (Wendy/Lyndi):</b> 92 trucks yesterday, 666 miles/truck. 4 open shifts (rising to 5, pending 6 — two drivers on 152). 19 opportunities on the northern lanes (segment failures); the Texas/California one didn't record. 3 down trucks (one missing from Ben's report — RO not yet opened, though ops emailed). 6 autonomous departures. 539 empty miles (one empty move so far, Indy→PA — struggled to get freight to Carlisle yesterday, likely again today, a northeast capacity opportunity).</p>
+<p><b>Driver situations (152):</b> Two at risk — one went to the yard yesterday, couldn't get to his buried trailer, didn't tell anyone, and just left/went home (found out while tracking trucks; trying to save him); the other put in a two-week notice (found a job with a buddy — also trying to save him). Plus <b>Kevin</b> (incoming orientation) — his wife was in an accident and he needs help; recruiting to review the updated info and possibly push his start.</p>
+<p><b>Cross-lane themes:</b></p>
+<ul>
+<li><b>Yard congestion:</b> Indy yard — moving out 16 trailers this morning; KC yard — Tony still working on options (both teams aware). Brian visiting KC this weekend for ideas/photos. It's driving real driver frustration and losses.</li>
+<li><b>Vacation SOP (coming):</b> The unscheduled-vacation gaps (a driver on vacation not on the schedule) — an SOP is coming so it stops recurring.</li>
+<li><b>Trailer pool (Nick):</b> Looking good — 12 in Whiteville (Virginia) with 4 empties in Mount Airy; great weekend coverage by the team (Sean/Chris). Still ~12,000 miles short of the 800-mile goal yesterday (the 19 opportunities are another ~5–6k), and Driscoll's was down.</li>
+<li><b>New hires this week (key):</b> 8 for Monday (7 in class + 1 doing express orientation from home, ready tomorrow) and 5 Wednesday = ~13 total. Talk to each one and set them up for success on their first loads.</li>
+<li><b>Aurora auto-tags (Ashley):</b> Focus today on getting the Aurora load auto-tags in — noticed there aren't really automations on Aurora lanes; Ashley working with Sean so no lanes get missed. Also working freight gaps and checking with Barry/Richard on the sales blitz.</li>
+<li><b>Service / give-backs (John):</b> Last week's recurring theme was simple mistakes that burned us — giving freight back late and misreading windows. Check the freight roster 2–3× daily so loads go back to OTR with enough time to cover; escalate service concerns to John/Lyndi. All hands on deck, communicate timely.</li>
+<li><b>Northeast (Travis):</b> Area 14 will be very challenging the next couple days — focus is getting those loads there first, then figure out the rest.</li>
+<li><b>Follow-ups (Kristi):</b> Maintenance-side process double-checks and the yard issues on her list.</li>
+</ul>`;
+
+  if(!store.days[iso]) store.days[iso]={am:{net:"",lanes:{}}, pm:{net:"",lanes:{}}, savedAt:new Date().toISOString()};
+  if(!store.days[iso].am) store.days[iso].am={net:"",lanes:{}};
+  store.days[iso].am.net=amNet;
+  store.days[iso].am.lanes=amLanes;
   store.days[iso].savedAt=new Date().toISOString();
   await saveDays(iso);
 }
